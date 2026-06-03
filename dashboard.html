@@ -273,7 +273,10 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000/api';
+    // Dynamically construct API URL based on current domain
+    const API_URL = window.location.origin === 'http://localhost:3000'
+      ? 'http://localhost:3000/api'
+      : 'https://client-dashboard-ugki.onrender.com/api';
     let allProducts = [];
     let selectedProducts = new Set();
     let currentProject = null;
