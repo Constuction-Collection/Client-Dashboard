@@ -57,7 +57,7 @@ app.get('/api/products', async (req, res) => {
                   }
                 );
                 console.log(`Product ${productId} fields:`, linkedResponse.data.fields);
-                return linkedResponse.data.fields['Competitor Product Request'] || 'Unknown Product';
+                return linkedResponse.data.fields['Competitor Product Name'] || 'Unknown Product';
               })
             );
 
