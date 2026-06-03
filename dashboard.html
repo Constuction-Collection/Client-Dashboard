@@ -369,11 +369,11 @@
       allProducts.forEach((product, index) => {
         const fields = product.fields;
         const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
-        const myPrice = getFieldValue(product, 'My Retail Price + GST') || 0;
-        const competitorPrice = getFieldValue(product, 'Competitor Quoted Price + GST') || 0;
-        const myCost = getFieldValue(product, 'My Cost + GST') || 0;
-        const costDiff = getFieldValue(product, 'Cost Difference') || (myPrice - competitorPrice);
-        const savingsPercentage = getFieldValue(product, 'Savings Percentage') || 0;
+        const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+        const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+        const myCost = parseFloat(getFieldValue(product, 'My Cost + GST')) || 0;
+        const costDiff = parseFloat(getFieldValue(product, 'Cost Difference')) || (myPrice - competitorPrice);
+        const savingsPercentage = parseFloat(getFieldValue(product, 'Savings Percentage')) || 0;
 
         const myImages = getFieldValue(product, 'My Product Photos');
         const competitorImages = getFieldValue(product, 'Competitor Product Images');
@@ -452,9 +452,9 @@
         const product = allProducts[index];
         const fields = product.fields;
         const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
-        const myPrice = getFieldValue(product, 'My Retail Price + GST') || 0;
-        const competitorPrice = getFieldValue(product, 'Competitor Quoted Price + GST') || 0;
-        
+        const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+        const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+
         totalYourPrice += myPrice;
         totalCompetitorPrice += competitorPrice;
         selectedCount++;
