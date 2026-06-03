@@ -90,7 +90,6 @@
       margin-bottom: 25px;
       padding-bottom: 15px;
       border-bottom: 3px solid #667eea;
-      display: none;
     }
 
     .option-item {
@@ -182,6 +181,7 @@
       color: #666;
       text-align: center;
       font-weight: 500;
+      display: block !important;
     }
 
     .images > div > .image-label:first-child {
@@ -675,16 +675,17 @@
     }
 
     function scrollToProduct(productName) {
-      const productCards = document.querySelectorAll('.product-card');
-      for (let card of productCards) {
-        const header = card.querySelector('.card-header');
-        if (header && header.textContent.trim() === productName) {
-          header.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          // Highlight the sidebar button
-          updateActiveSidebar(productName);
-          break;
+      setTimeout(() => {
+        const productCards = document.querySelectorAll('.product-card');
+        for (let card of productCards) {
+          const header = card.querySelector('.card-header');
+          if (header && header.textContent.trim() === productName) {
+            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateActiveSidebar(productName);
+            break;
+          }
         }
-      }
+      }, 100);
     }
 
     function updateActiveSidebar(productName) {
