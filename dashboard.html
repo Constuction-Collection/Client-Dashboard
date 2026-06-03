@@ -168,15 +168,22 @@
     .image-box img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
     }
 
     .image-label {
       font-size: 12px;
       color: #666;
-      margin-top: 6px;
       text-align: center;
       font-weight: 500;
+    }
+
+    .images > div > .image-label:first-child {
+      margin-bottom: 10px;
+    }
+
+    .images > div > .image-label:last-child {
+      margin-top: 10px;
     }
 
     .supplier-label {
@@ -232,6 +239,13 @@
     
     .savings {
       color: #28a745;
+      font-weight: 600;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .loss {
+      color: #dc3545;
       font-weight: 600;
       font-size: 16px;
       margin-top: 10px;
@@ -488,18 +502,18 @@
 
               <div class="images">
                 <div>
+                  <div class="image-label">${groupName}</div>
                   <div class="image-box">
                     ${competitorImages ? `<img src="${getImageUrl(competitorImages)}" alt="Competitor">` : '<div style="color: #ccc;">No Image</div>'}
                   </div>
                   <div class="image-label">Competitor Product</div>
-                  <div class="supplier-label">${competitorSupplier}</div>
                 </div>
                 <div>
+                  <div class="image-label">${productName}</div>
                   <div class="image-box">
                     ${myImages ? `<img src="${getImageUrl(myImages)}" alt="My Product">` : '<div style="color: #ccc;">No Image</div>'}
                   </div>
                   <div class="image-label">Our Product</div>
-                  <div class="supplier-label">${mySupplier}</div>
                 </div>
               </div>
 
@@ -526,8 +540,8 @@
                   <span>Competitor Price:</span>
                   <span>$${competitorPrice.toFixed(2)}</span>
                 </div>
-                <div class="savings">
-                  Savings: $${costDiff.toFixed(2)} (${(savingsPercentage * 100).toFixed(1)}%)
+                <div class="${costDiff >= 0 ? 'savings' : 'loss'}">
+                  ${costDiff >= 0 ? 'Savings' : 'Over'}: $${Math.abs(costDiff).toFixed(2)} (${Math.abs(savingsPercentage * 100).toFixed(1)}%)
                 </div>
               </div>
             </div>
@@ -543,6 +557,8 @@
     }
 
     function toggleProduct(index, groupName) {
+      console.log('Before toggle:', selectedProducts);
+      console.log('Clicking index:', index, 'groupName:', groupName);
       if (selectedProducts[groupName] === index) {
         // Deselect if clicking the same option
         delete selectedProducts[groupName];
@@ -550,6 +566,7 @@
         // Select this option (replaces any previous selection in this group)
         selectedProducts[groupName] = index;
       }
+      console.log('After toggle:', selectedProducts);
       renderDashboard();
     }
 
