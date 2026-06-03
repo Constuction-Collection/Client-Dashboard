@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Comparison Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <style>
     * {
       margin: 0;
@@ -97,14 +98,9 @@
       padding: 20px;
       margin-bottom: 20px;
       transition: all 0.3s ease;
-      height: 550px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
     }
 
     .option-item-content {
-      overflow-y: auto;
       flex: 1;
     }
 
@@ -189,6 +185,9 @@
 
     .images > div > .image-label:first-child {
       margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
     }
 
     .images > div > .image-label:last-child {
@@ -443,13 +442,6 @@
 
     <div class="main-wrapper" id="mainWrapper" style="display: none;">
       <div class="sidebar">
-        <input
-          type="text"
-          id="sidebarSearch"
-          class="sidebar-search"
-          placeholder="Search products..."
-          onkeyup="filterSidebar()"
-        >
         <div class="sidebar-title">Products</div>
         <ul class="sidebar-list" id="sidebarList"></ul>
       </div>
@@ -469,7 +461,7 @@
       ? 'http://localhost:3000/api'
       : 'https://client-dashboard-ugki.onrender.com/api';
     let allProducts = [];
-    let selectedProducts = {}; // Changed to object to track one selection per group
+    let selectedProducts = {}; // Track multiple selections by product index
     let currentProject = null;
 
     // Get project from URL parameter
@@ -720,17 +712,15 @@
     }
 
     function toggleProduct(index, groupName) {
-      console.log('Before toggle:', selectedProducts);
-      console.log('Clicking index:', index, 'groupName:', groupName);
       if (selectedProducts[groupName] === index) {
         // Deselect if clicking the same option
         delete selectedProducts[groupName];
       } else {
-        // Select this option (replaces any previous selection in this group)
+        // Select this option (only one per group)
         selectedProducts[groupName] = index;
       }
-      console.log('After toggle:', selectedProducts);
       renderDashboard();
+      updateSummary();
     }
 
     function updateSummary() {
@@ -742,7 +732,7 @@
       let selectedCount = 0;
       let selectedItems = [];
 
-      // Iterate through selected products (now organized by group)
+      // Iterate through selected products (one per group)
       Object.keys(selectedProducts).forEach(groupName => {
         const index = selectedProducts[groupName];
         const product = allProducts[index];
