@@ -64,8 +64,8 @@
     }
     
     .dashboard {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 40px;
       margin-bottom: 40px;
     }
@@ -151,15 +151,15 @@
     .images {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin: 15px 0;
+      gap: 20px;
+      margin: 20px 0;
     }
 
     .image-box {
       background: #f9f9f9;
       border-radius: 12px;
       overflow: hidden;
-      height: 150px;
+      height: 300px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -301,14 +301,19 @@
     }
     
     @media (max-width: 768px) {
-      .dashboard {
+      .images {
         grid-template-columns: 1fr;
+        gap: 15px;
       }
-      
+
+      .image-box {
+        height: 250px;
+      }
+
       h1 {
         font-size: 24px;
       }
-      
+
       .project-selector {
         flex-direction: column;
         align-items: flex-start;
@@ -428,8 +433,8 @@
       dashboard.innerHTML = '';
 
       if (allProducts.length === 0) {
-        dashboard.innerHTML = '<div style="grid-column: 1/-1; color: white; text-align: center; padding: 40px;">No products found for this project.</div>';
-        dashboard.style.display = 'grid';
+        dashboard.innerHTML = '<div style="color: white; text-align: center; padding: 40px;">No products found for this project.</div>';
+        dashboard.style.display = 'flex';
         return;
       }
 
@@ -443,8 +448,11 @@
         groupedProducts[groupName].push({ product, index });
       });
 
+      // Sort groups alphabetically
+      const sortedGroupNames = Object.keys(groupedProducts).sort();
+
       // Create cards for each group
-      Object.keys(groupedProducts).forEach(groupName => {
+      sortedGroupNames.forEach(groupName => {
         const options = groupedProducts[groupName];
         const card = document.createElement('div');
         card.className = 'product-card';
@@ -530,7 +538,7 @@
         dashboard.appendChild(card);
       });
 
-      document.getElementById('dashboard').style.display = 'grid';
+      document.getElementById('dashboard').style.display = 'flex';
       updateSummary();
     }
 
