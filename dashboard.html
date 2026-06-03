@@ -90,6 +90,7 @@
       margin-bottom: 25px;
       padding-bottom: 15px;
       border-bottom: 3px solid #667eea;
+      display: none;
     }
 
     .option-item {
@@ -352,7 +353,7 @@
 
     .sidebar-list {
       list-style: none;
-      max-height: 400px;
+      max-height: calc(100vh - 250px);
       overflow-y: auto;
     }
 
@@ -568,7 +569,7 @@
         const card = document.createElement('div');
         card.className = 'product-card';
 
-        let optionsHtml = ``;
+        let optionsHtml = `<div class="card-header">${groupName}</div>`;
 
         options.forEach(({ product, index }) => {
           const fields = product.fields;
@@ -600,14 +601,12 @@
               <div class="option-item-content">
                 <div class="images">
                 <div>
-                  <div class="image-label">${groupName}</div>
                   <div class="image-box">
                     ${competitorImages ? `<img src="${getImageUrl(competitorImages)}" alt="Competitor">` : '<div style="color: #ccc;">No Image</div>'}
                   </div>
                   <div class="image-label">Competitor Product</div>
                 </div>
                 <div>
-                  <div class="image-label">${productName}</div>
                   <div class="image-box">
                     ${myImages ? `<img src="${getImageUrl(myImages)}" alt="My Product">` : '<div style="color: #ccc;">No Image</div>'}
                   </div>
@@ -638,8 +637,8 @@
                   <span>Competitor Price:</span>
                   <span>$${competitorPrice.toFixed(2)}</span>
                 </div>
-                <div class="${costDiff >= 0 ? 'savings' : 'loss'}">
-                  ${costDiff >= 0 ? 'Savings' : 'Over'}: $${Math.abs(costDiff).toFixed(2)} (${Math.abs(savingsPercentage * 100).toFixed(1)}%)
+                <div class="${costDiff <= 0 ? 'savings' : 'loss'}">
+                  ${costDiff <= 0 ? 'Savings' : 'Over'}: $${Math.abs(costDiff).toFixed(2)} (${Math.abs(savingsPercentage * 100).toFixed(1)}%)
                 </div>
               </div>
               </div>
