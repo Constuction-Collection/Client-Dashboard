@@ -77,20 +77,51 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       transition: transform 0.3s ease;
     }
-    
+
     .product-card:hover {
       transform: translateY(-5px);
     }
-    
+
     .card-header {
+      font-size: 20px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #667eea;
+    }
+
+    .option-item {
+      border: 2px solid #f0f0f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .option-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .option-item.selected {
+      border-color: #28a745;
+      background: #f0fdf4;
+    }
+
+    .option-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #f0f0f0;
-      padding-bottom: 15px;
+      margin-bottom: 15px;
     }
-    
+
+    .option-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      flex: 1;
+    }
+
     .product-name {
       font-size: 18px;
       font-weight: 600;
@@ -121,31 +152,67 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 15px;
-      margin: 20px 0;
+      margin: 15px 0;
     }
-    
+
     .image-box {
       background: #f9f9f9;
       border-radius: 12px;
       overflow: hidden;
-      height: 200px;
+      height: 150px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    
+
     .image-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    
+
     .image-label {
       font-size: 12px;
       color: #666;
-      margin-top: 8px;
+      margin-top: 6px;
       text-align: center;
       font-weight: 500;
+    }
+
+    .supplier-label {
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+      margin-top: 3px;
+    }
+
+    .room-spec {
+      background: #f5f5f5;
+      border-left: 4px solid #667eea;
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .notes-section {
+      background: #fffbf0;
+      border-left: 4px solid #ffb74d;
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
     }
     
     .pricing {
@@ -278,7 +345,7 @@
       ? 'http://localhost:3000/api'
       : 'https://client-dashboard-ugki.onrender.com/api';
     let allProducts = [];
-    let selectedProducts = new Set();
+    let selectedProducts = {}; // Changed to object to track one selection per group
     let currentProject = null;
 
     // Get project from URL parameter
@@ -330,11 +397,11 @@
     async function fetchProductsForProject(projectName) {
       try {
         currentProject = projectName;
-        selectedProducts.clear();
-        
+        selectedProducts = {}; // Reset selections
+
         const response = await fetch(`${API_URL}/products?project=${encodeURIComponent(projectName)}`);
         if (!response.ok) throw new Error('Failed to fetch products');
-        
+
         allProducts = await response.json();
         renderDashboard();
       } catch (error) {
@@ -366,75 +433,114 @@
         return;
       }
 
+      // Group products by "Competitor Product Request"
+      const groupedProducts = {};
       allProducts.forEach((product, index) => {
-        const fields = product.fields;
-        const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
-        const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
-        const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
-        const myCost = parseFloat(getFieldValue(product, 'My Cost + GST')) || 0;
-        const costDiff = parseFloat(getFieldValue(product, 'Cost Difference')) || (myPrice - competitorPrice);
-        const savingsPercentage = parseFloat(getFieldValue(product, 'Savings Percentage')) || 0;
+        const groupName = getFieldValue(product, 'Competitor Product Request') || 'Unknown Group';
+        if (!groupedProducts[groupName]) {
+          groupedProducts[groupName] = [];
+        }
+        groupedProducts[groupName].push({ product, index });
+      });
 
-        const myImages = getFieldValue(product, 'My Product Photos');
-        const competitorImages = getFieldValue(product, 'Competitor Product Images');
-        const mySupplier = getFieldValue(product, 'My Supplier') || 'N/A';
-        const competitorProduct = getFieldValue(product, 'Competitor Product Request') || 'N/A';
-        const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
-        
+      // Create cards for each group
+      Object.keys(groupedProducts).forEach(groupName => {
+        const options = groupedProducts[groupName];
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.innerHTML = `
-          <div class="card-header">
-            <div class="product-name">${productName}</div>
-            <button class="select-btn" onclick="toggleProduct(${index}, '${productName}', ${myPrice})">
-              ${selectedProducts.has(index) ? '✓ Selected' : 'Select'}
-            </button>
-          </div>
-          
-          <div class="images">
-            <div>
-              <div class="image-box">
-                ${competitorImages ? `<img src="${getImageUrl(competitorImages)}" alt="Competitor">` : '<div style="color: #ccc;">No Image</div>'}
+
+        let optionsHtml = `<div class="card-header">${groupName}</div>`;
+
+        options.forEach(({ product, index }) => {
+          const fields = product.fields;
+          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
+          const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+          const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+          const costDiff = parseFloat(getFieldValue(product, 'Cost Difference')) || (myPrice - competitorPrice);
+          const savingsPercentage = parseFloat(getFieldValue(product, 'Savings Percentage')) || 0;
+
+          const myImages = getFieldValue(product, 'My Product Photos');
+          const competitorImages = getFieldValue(product, 'Competitor Product Images');
+          const mySupplier = getFieldValue(product, 'My Supplier') || 'N/A';
+          const roomSpec = getFieldValue(product, 'Room (from Competitor\'s Products)') || '';
+          const myNotes = getFieldValue(product, 'My Notes') || '';
+          const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
+
+          const isSelected = selectedProducts[groupName] === index;
+          const optionClass = isSelected ? 'option-item selected' : 'option-item';
+
+          optionsHtml += `
+            <div class="${optionClass}" id="option-${index}">
+              <div class="option-header">
+                <div class="option-name">${productName}</div>
+                <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
+                  ${isSelected ? '✓ Selected' : 'Select'}
+                </button>
               </div>
-              <div class="image-label">Competitor: ${competitorProduct}</div>
-              <div style="font-size: 11px; color: #999; text-align: center;">${competitorSupplier}</div>
-            </div>
-            <div>
-              <div class="image-box">
-                ${myImages ? `<img src="${getImageUrl(myImages)}" alt="My Product">` : '<div style="color: #ccc;">No Image</div>'}
+
+              <div class="images">
+                <div>
+                  <div class="image-box">
+                    ${competitorImages ? `<img src="${getImageUrl(competitorImages)}" alt="Competitor">` : '<div style="color: #ccc;">No Image</div>'}
+                  </div>
+                  <div class="image-label">Competitor Product</div>
+                  <div class="supplier-label">${competitorSupplier}</div>
+                </div>
+                <div>
+                  <div class="image-box">
+                    ${myImages ? `<img src="${getImageUrl(myImages)}" alt="My Product">` : '<div style="color: #ccc;">No Image</div>'}
+                  </div>
+                  <div class="image-label">Our Product</div>
+                  <div class="supplier-label">${mySupplier}</div>
+                </div>
               </div>
-              <div class="image-label">Our: ${productName}</div>
-              <div style="font-size: 11px; color: #999; text-align: center;">${mySupplier}</div>
+
+              ${roomSpec ? `
+                <div class="room-spec">
+                  <div class="section-label">Room Specification</div>
+                  ${roomSpec}
+                </div>
+              ` : ''}
+
+              ${myNotes ? `
+                <div class="notes-section">
+                  <div class="section-label">My Notes</div>
+                  ${myNotes}
+                </div>
+              ` : ''}
+
+              <div class="pricing">
+                <div class="price-row">
+                  <span>Your Price:</span>
+                  <span>$${myPrice.toFixed(2)}</span>
+                </div>
+                <div class="price-row">
+                  <span>Competitor Price:</span>
+                  <span>$${competitorPrice.toFixed(2)}</span>
+                </div>
+                <div class="savings">
+                  Savings: $${costDiff.toFixed(2)} (${(savingsPercentage * 100).toFixed(1)}%)
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div class="pricing">
-            <div class="price-row">
-              <span>Your Price:</span>
-              <span>$${myPrice.toFixed(2)}</span>
-            </div>
-            <div class="price-row">
-              <span>Competitor Price:</span>
-              <span>$${competitorPrice.toFixed(2)}</span>
-            </div>
-            <div class="savings">
-              Savings: $${costDiff.toFixed(2)} (${(savingsPercentage * 100).toFixed(1)}%)
-            </div>
-          </div>
-        `;
-        
+          `;
+        });
+
+        card.innerHTML = optionsHtml;
         dashboard.appendChild(card);
       });
-      
+
       document.getElementById('dashboard').style.display = 'grid';
       updateSummary();
     }
 
-    function toggleProduct(index, name, price) {
-      if (selectedProducts.has(index)) {
-        selectedProducts.delete(index);
+    function toggleProduct(index, groupName) {
+      if (selectedProducts[groupName] === index) {
+        // Deselect if clicking the same option
+        delete selectedProducts[groupName];
       } else {
-        selectedProducts.add(index);
+        // Select this option (replaces any previous selection in this group)
+        selectedProducts[groupName] = index;
       }
       renderDashboard();
     }
@@ -442,13 +548,15 @@
     function updateSummary() {
       const summary = document.getElementById('summary');
       const summaryContent = document.getElementById('summaryContent');
-      
+
       let totalYourPrice = 0;
       let totalCompetitorPrice = 0;
       let selectedCount = 0;
       let selectedItems = [];
-      
-      selectedProducts.forEach(index => {
+
+      // Iterate through selected products (now organized by group)
+      Object.keys(selectedProducts).forEach(groupName => {
+        const index = selectedProducts[groupName];
         const product = allProducts[index];
         const fields = product.fields;
         const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
@@ -458,23 +566,31 @@
         totalYourPrice += myPrice;
         totalCompetitorPrice += competitorPrice;
         selectedCount++;
-        selectedItems.push({ name: productName, yourPrice: myPrice, competitorPrice: competitorPrice });
+        selectedItems.push({
+          groupName: groupName,
+          name: productName,
+          yourPrice: myPrice,
+          competitorPrice: competitorPrice
+        });
       });
-      
+
       const totalSavings = totalCompetitorPrice - totalYourPrice;
       const savingsPercent = totalCompetitorPrice > 0 ? (totalSavings / totalCompetitorPrice * 100).toFixed(1) : 0;
-      
+
       let html = '<div class="summary-row"><span class="summary-label">Selected Products:</span><span class="summary-value">' + selectedCount + '</span></div>';
-      
+
       selectedItems.forEach(item => {
         html += `
           <div class="summary-row">
+            <span class="summary-label"><strong>${item.groupName}</strong></span>
+          </div>
+          <div class="summary-row" style="padding-left: 20px; font-size: 14px;">
             <span class="summary-label">${item.name}</span>
             <span class="summary-value">$${item.yourPrice.toFixed(2)}</span>
           </div>
         `;
       });
-      
+
       html += `
         <div class="total-row">
           <span>Total with Your Products:</span>
@@ -489,7 +605,7 @@
           <span class="total-savings">$${totalSavings.toFixed(2)} (${savingsPercent}%)</span>
         </div>
       `;
-      
+
       summaryContent.innerHTML = html;
       summary.style.display = selectedCount > 0 ? 'block' : 'none';
     }
