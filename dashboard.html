@@ -359,27 +359,27 @@
     function renderDashboard() {
       const dashboard = document.getElementById('dashboard');
       dashboard.innerHTML = '';
-      
+
       if (allProducts.length === 0) {
         dashboard.innerHTML = '<div style="grid-column: 1/-1; color: white; text-align: center; padding: 40px;">No products found for this project.</div>';
         dashboard.style.display = 'grid';
         return;
       }
-      
+
       allProducts.forEach((product, index) => {
         const fields = product.fields;
         const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
         const myPrice = getFieldValue(product, 'My Retail Price + GST') || 0;
         const competitorPrice = getFieldValue(product, 'Competitor Quoted Price + GST') || 0;
+        const myCost = getFieldValue(product, 'My Cost + GST') || 0;
         const costDiff = getFieldValue(product, 'Cost Difference') || (myPrice - competitorPrice);
         const savingsPercentage = getFieldValue(product, 'Savings Percentage') || 0;
-        
+
         const myImages = getFieldValue(product, 'My Product Photos');
         const competitorImages = getFieldValue(product, 'Competitor Product Images');
         const mySupplier = getFieldValue(product, 'My Supplier') || 'N/A';
         const competitorProduct = getFieldValue(product, 'Competitor Product Request') || 'N/A';
         const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
-        const size = getFieldValue(product, 'Size') || 'N/A';
         
         const card = document.createElement('div');
         card.className = 'product-card';
