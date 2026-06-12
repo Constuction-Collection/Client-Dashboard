@@ -741,15 +741,22 @@
         const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
         const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
         const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+        const quantity = parseFloat(getFieldValue(product, 'Quantity')) || 1;
 
-        totalYourPrice += myPrice;
-        totalCompetitorPrice += competitorPrice;
+        const yourTotal = myPrice * quantity;
+        const competitorTotal = competitorPrice * quantity;
+
+        totalYourPrice += yourTotal;
+        totalCompetitorPrice += competitorTotal;
         selectedCount++;
         selectedItems.push({
           groupName: groupName,
           name: productName,
           yourPrice: myPrice,
-          competitorPrice: competitorPrice
+          competitorPrice: competitorPrice,
+          quantity: quantity,
+          yourTotal: yourTotal,
+          competitorTotal: competitorTotal
         });
       });
 
@@ -764,8 +771,8 @@
             <span class="summary-label"><strong>${item.groupName}</strong></span>
           </div>
           <div class="summary-row" style="padding-left: 20px; font-size: 14px;">
-            <span class="summary-label">${item.name}</span>
-            <span class="summary-value">$${item.yourPrice.toFixed(2)}</span>
+            <span class="summary-label">${item.name} (Qty: ${item.quantity})</span>
+            <span class="summary-value">$${item.yourTotal.toFixed(2)}</span>
           </div>
         `;
       });
