@@ -631,15 +631,23 @@
 
               <div class="pricing">
                 <div class="price-row">
-                  <span>Your Price:</span>
+                  <span>Your Price per Unit:</span>
                   <span>$${myPrice.toFixed(2)}</span>
                 </div>
                 <div class="price-row">
-                  <span>Competitor Price:</span>
+                  <span>Competitor Price per Unit:</span>
                   <span>$${competitorPrice.toFixed(2)}</span>
                 </div>
+                <div class="price-row" style="border-top: 1px solid #e0e0e0; padding-top: 8px; margin-top: 8px;">
+                  <span><strong>Your Total Price:</strong></span>
+                  <span><strong>$${(myPrice * getFieldValue(product, 'Competitor Product Quantity', 1)).toFixed(2)}</strong></span>
+                </div>
+                <div class="price-row">
+                  <span><strong>Competitor Total Price:</strong></span>
+                  <span><strong>$${(competitorPrice * getFieldValue(product, 'Competitor Product Quantity', 1)).toFixed(2)}</strong></span>
+                </div>
                 <div class="${costDiff <= 0 ? 'savings' : 'loss'}">
-                  ${costDiff <= 0 ? 'Savings' : 'Over'}: $${Math.abs(costDiff).toFixed(2)} (${Math.abs(savingsPercentage * 100).toFixed(1)}%)
+                  ${costDiff <= 0 ? 'Savings' : 'Over'}: $${Math.abs(costDiff * getFieldValue(product, 'Competitor Product Quantity', 1)).toFixed(2)} (${Math.abs(savingsPercentage * 100).toFixed(1)}%)
                 </div>
               </div>
               </div>
@@ -741,7 +749,7 @@
         const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
         const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
         const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
-        const quantity = parseFloat(getFieldValue(product, 'Quantity')) || 1;
+        const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
 
         const yourTotal = myPrice * quantity;
         const competitorTotal = competitorPrice * quantity;
