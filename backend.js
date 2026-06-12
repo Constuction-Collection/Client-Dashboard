@@ -44,7 +44,7 @@ app.get('/api/products', async (req, res) => {
             console.log(`Enriching record ${record.id} with products:`, record.fields['Competitor\'s Products']);
             // Fetch the linked competitor product records
             const productIds = record.fields['Competitor\'s Products'];
-            const productNames = await Promise.all(
+            const productData = await Promise.all(
               productIds.map(async (productId) => {
                 console.log(`Fetching product ${productId}...`);
                 const linkedResponse = await axios.get(
@@ -57,13 +57,17 @@ app.get('/api/products', async (req, res) => {
                   }
                 );
                 console.log(`Product ${productId} fields:`, linkedResponse.data.fields);
-                return linkedResponse.data.fields['Competitor Product Name'] || 'Unknown Product';
+                return {
+                  name: linkedResponse.data.fields['Competitor Product Name'] || 'Unknown Product',
+                  quantity: linkedResponse.data.fields['Quantity'] || 1
+                };
               })
             );
 
-            console.log(`Enriched product names for ${record.id}:`, productNames);
-            // Add the product names to the record
-            record.fields['Competitor Product Name'] = productNames.join(', ');
+            console.log(`Enriched product data for ${record.id}:`, productData);
+            // Add the product names and quantities to the record
+            record.fields['Competitor Product Name'] = productData[0].name;
+            record.fields['Competitor Product Quantity'] = productData[0].quantity;
           } catch (err) {
             console.error(`Error enriching record ${record.id}:`, err.message);
             record.fields['Competitor Product Name'] = 'Error loading product name';
