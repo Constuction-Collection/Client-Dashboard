@@ -154,11 +154,12 @@ app.get('/api/client-projects', async (req, res) => {
     }
 
     const contactId = contacts[0].id;
+    const contactName = contacts[0].fields['Contact Name'];
     const company = contacts[0].fields['Company'];
 
-    console.log(`Looking for projects for contact ${contactId} (${company})`);
+    console.log(`Looking for projects for contact ${contactName} (${contactId}) at ${company}`);
 
-    // Get all Competitor's Products records where requesting person includes this contact
+    // Get all Competitor's Products records where Contact Name includes this contact
     const productsResponse = await axios.get(
       `https://api.airtable.com/v0/${BASE_ID}/${COMPETITOR_PRODUCTS_TABLE_ID}`,
       {
@@ -168,16 +169,16 @@ app.get('/api/client-projects', async (req, res) => {
       }
     );
 
-    // Filter by requesting person and get unique projects
+    // Filter by contact name and get unique projects
     const projectMap = {};
 
     productsResponse.data.records.forEach(record => {
-      const requestingPersons = record.fields['requesting person'] || [];
+      const contactNames = record.fields['Contact Name'] || [];
 
-      // Check if this contact is in the requesting person field
-      const isCompanyProduct = requestingPersons.includes(contactId);
+      // Check if this contact is in the Contact Name field
+      const isContactProduct = contactNames.includes(contactId);
 
-      if (isCompanyProduct) {
+      if (isContactProduct) {
         const project = record.fields['Project'];
         if (project) {
           if (!projectMap[project]) {
