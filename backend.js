@@ -66,8 +66,8 @@ app.get('/api/products', async (req, res) => {
             );
 
             console.log(`Enriched product data for ${record.id}:`, productData);
-            // Add the product names and quantities to the record
-            record.fields['Competitor Product Name'] = productData[0].name;
+            // Add the product names and quantities to the record (use different field name to avoid conflict with lookup field)
+            record.fields['Competitor_Product_Name_Text'] = productData[0].name;
             record.fields['Competitor Product Quantity'] = productData[0].quantity;
           } catch (err) {
             console.error(`Error enriching record ${record.id}:`, err.message);

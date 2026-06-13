@@ -553,7 +553,7 @@
       // Group products by competitor product (enriched from backend)
       const groupedProducts = {};
       allProducts.forEach((product, index) => {
-        const groupName = product.fields['Competitor Product Name'] || 'Unknown Group';
+        const groupName = product.fields['Competitor_Product_Name_Text'] || 'Unknown Group';
         if (!groupedProducts[groupName]) {
           groupedProducts[groupName] = [];
         }
