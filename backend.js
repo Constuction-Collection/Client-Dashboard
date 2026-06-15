@@ -160,29 +160,31 @@ app.get('/api/client-projects', async (req, res) => {
 
     console.log(`Looking for projects for contact ${contactName} (${contactId}) at ${company}`);
 
-    // Get all Competitor's Products records where Contact Name includes this contact
+    // Get all Competitor's Products records
     const productsResponse = await axios.get(
       `https://api.airtable.com/v0/${BASE_ID}/${COMPETITOR_PRODUCTS_TABLE_ID}`,
       {
         headers: {
           'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
-        },
-        params: {
-          filterByFormula: `FIND("${contactId}", CONCATENATE(ARRAYUNIQUE({Contact Name}))) > 0`
         }
       }
     );
 
-    // Get unique projects (Airtable already filtered by contact)
+    // Get unique projects for this contact only
     const projectMap = {};
 
     productsResponse.data.records.forEach(record => {
-      const project = record.fields['Project'];
-      if (project) {
-        if (!projectMap[project]) {
-          projectMap[project] = { name: project, productCount: 0, isCompleted: false };
+      const contactNames = record.fields['Contact Name'] || [];
+
+      // Only include if this contact is linked to this product
+      if (contactNames.includes(contactId)) {
+        const project = record.fields['Project'];
+        if (project) {
+          if (!projectMap[project]) {
+            projectMap[project] = { name: project, productCount: 0, isCompleted: false };
+          }
+          projectMap[project].productCount++;
         }
-        projectMap[project].productCount++;
       }
     });
 
@@ -202,9 +204,12 @@ app.get('/api/client-projects', async (req, res) => {
 app.get('/api/admin/all-projects', async (req, res) => {
   try {
     const adminPassword = req.query.password;
+    const expectedPassword = process.env.ADMIN_PASSWORD;
+
+    console.log(`Admin login attempt - received: "${adminPassword}", expected: "${expectedPassword}"`);
 
     // Simple password protection
-    if (adminPassword !== process.env.ADMIN_PASSWORD) {
+    if (adminPassword !== expectedPassword) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
