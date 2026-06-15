@@ -173,19 +173,20 @@ app.get('/api/client-projects', async (req, res) => {
     // Get unique projects for this contact AND company
     const projectMap = {};
 
-    productsResponse.data.records.forEach(record => {
-      const contactNames = record.fields['Contact Name'] || [];
-      const requestingCompany = record.fields['Requesting Company'] || [];
+    console.log(`DEBUG: Looking for contact ID: ${contactId}`);
+    let matchCount = 0;
 
-      // Only include if this contact is linked AND company matches
+    productsResponse.data.records.forEach((record, index) => {
+      const contactNames = record.fields['Contact Name'] || [];
+
+      console.log(`DEBUG: Record ${index} has contacts:`, contactNames);
+
+      // Only include if this contact is linked
       const isContactMatch = contactNames.includes(contactId);
-      const isCompanyMatch = requestingCompany.length === 0 || requestingCompany.some(compId => {
-        // Since company is linked, we need to match the company ID
-        // For now, we'll filter by contact - company validation happens at login
-        return true;
-      });
 
       if (isContactMatch) {
+        matchCount++;
+        console.log(`DEBUG: MATCH FOUND! Record ${index} matches contact ${contactId}`);
         const projectIds = record.fields['Project'] || [];
         projectIds.forEach(projectId => {
           if (!projectMap[projectId]) {
@@ -195,6 +196,8 @@ app.get('/api/client-projects', async (req, res) => {
         });
       }
     });
+
+    console.log(`DEBUG: Total matches for ${contactId}: ${matchCount}`);
 
     // Convert to array and sort
     const projects = Object.values(projectMap).sort((a, b) => a.name.localeCompare(b.name));
