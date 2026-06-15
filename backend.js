@@ -173,7 +173,7 @@ app.get('/api/client-projects', async (req, res) => {
     // Get unique projects for this contact AND company
     const projectMap = {};
 
-    console.log(`DEBUG: Looking for contact ID: ${contactId}`);
+    console.log(`DEBUG: Looking for contact NAME: ${contactName}`);
     let matchCount = 0;
 
     productsResponse.data.records.forEach((record, index) => {
@@ -181,12 +181,12 @@ app.get('/api/client-projects', async (req, res) => {
 
       console.log(`DEBUG: Record ${index} has contacts:`, contactNames);
 
-      // Only include if this contact is linked
-      const isContactMatch = contactNames.includes(contactId);
+      // Only include if this contact is linked (match by contact NAME, not ID)
+      const isContactMatch = contactNames.includes(contactName);
 
       if (isContactMatch) {
         matchCount++;
-        console.log(`DEBUG: MATCH FOUND! Record ${index} matches contact ${contactId}`);
+        console.log(`DEBUG: MATCH FOUND! Record ${index} matches contact ${contactName}`);
         const projectIds = record.fields['Project'] || [];
         projectIds.forEach(projectId => {
           if (!projectMap[projectId]) {
@@ -265,14 +265,16 @@ app.get('/api/admin/all-projects', async (req, res) => {
       const contactNames = product.fields['Contact Name'] || [];
       const projectIds = product.fields['Project'] || [];
 
-      contactNames.forEach(contactId => {
-        if (clientProjects[contactId]) {
+      contactNames.forEach(contactName => {
+        // Find contact by name (Contact Name field stores contact names, not IDs)
+        const contactKey = Object.keys(clientProjects).find(id => clientProjects[id].contactName === contactName);
+
+        if (contactKey) {
           projectIds.forEach(projectId => {
-            // Get project name from project record (if available)
-            if (!clientProjects[contactId].projects.includes(projectId)) {
-              clientProjects[contactId].projects.push(projectId);
+            if (!clientProjects[contactKey].projects.includes(projectId)) {
+              clientProjects[contactKey].projects.push(projectId);
             }
-            clientProjects[contactId].productCount++;
+            clientProjects[contactKey].productCount++;
           });
         }
       });
