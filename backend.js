@@ -166,27 +166,23 @@ app.get('/api/client-projects', async (req, res) => {
       {
         headers: {
           'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        },
+        params: {
+          filterByFormula: `FIND("${contactId}", CONCATENATE(ARRAYUNIQUE({Contact Name}))) > 0`
         }
       }
     );
 
-    // Filter by contact name and get unique projects
+    // Get unique projects (Airtable already filtered by contact)
     const projectMap = {};
 
     productsResponse.data.records.forEach(record => {
-      const contactNames = record.fields['Contact Name'] || [];
-
-      // Check if this contact is in the Contact Name field
-      const isContactProduct = contactNames.includes(contactId);
-
-      if (isContactProduct) {
-        const project = record.fields['Project'];
-        if (project) {
-          if (!projectMap[project]) {
-            projectMap[project] = { name: project, productCount: 0, isCompleted: false };
-          }
-          projectMap[project].productCount++;
+      const project = record.fields['Project'];
+      if (project) {
+        if (!projectMap[project]) {
+          projectMap[project] = { name: project, productCount: 0, isCompleted: false };
         }
+        projectMap[project].productCount++;
       }
     });
 
