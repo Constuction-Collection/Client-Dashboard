@@ -40,6 +40,7 @@ app.get('/api/products', async (req, res) => {
     // Enrich records with competitor product names
     const enrichedRecords = await Promise.all(
       response.data.records.map(async (record) => {
+        console.log(`Processing record ${record.id}, Competitor's Products field:`, record.fields['Competitor\'s Products']);
         if (record.fields['Competitor\'s Products'] && Array.isArray(record.fields['Competitor\'s Products'])) {
           try {
             console.log(`Enriching record ${record.id} with products:`, record.fields['Competitor\'s Products']);
