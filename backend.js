@@ -252,14 +252,17 @@ app.get('/api/admin/all-projects', async (req, res) => {
     // Assign products to contacts
     productsResponse.data.records.forEach(product => {
       const contactNames = product.fields['Contact Name'] || [];
-      const project = product.fields['Project'];
+      const projectIds = product.fields['Project'] || [];
 
       contactNames.forEach(contactId => {
-        if (clientProjects[contactId] && project) {
-          if (!clientProjects[contactId].projects.includes(project)) {
-            clientProjects[contactId].projects.push(project);
-          }
-          clientProjects[contactId].productCount++;
+        if (clientProjects[contactId]) {
+          projectIds.forEach(projectId => {
+            // Get project name from project record (if available)
+            if (!clientProjects[contactId].projects.includes(projectId)) {
+              clientProjects[contactId].projects.push(projectId);
+            }
+            clientProjects[contactId].productCount++;
+          });
         }
       });
     });
