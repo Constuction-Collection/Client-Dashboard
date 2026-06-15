@@ -471,17 +471,19 @@
 
     async function fetchProjects() {
       try {
+        // If a project is in the URL, skip the dropdown and load products directly
+        if (urlProject) {
+          fetchProductsForProject(urlProject);
+          return;
+        }
+
+        // Otherwise, show the dropdown to select a project
         const response = await fetch(`${API_URL}/projects`);
         if (!response.ok) throw new Error('Failed to fetch projects');
-        
+
         const projects = await response.json();
         populateProjectDropdown(projects);
-        
-        if (urlProject) {
-          document.getElementById('projectSelect').value = urlProject;
-          fetchProductsForProject(urlProject);
-        }
-        
+
         document.getElementById('header').style.display = 'block';
         document.getElementById('loading').style.display = 'none';
       } catch (error) {
@@ -520,9 +522,19 @@
         if (!response.ok) throw new Error('Failed to fetch products');
 
         allProducts = await response.json();
+
+        // If project was passed via URL, show a simple title instead of the dropdown
+        if (urlProject) {
+          const header = document.getElementById('header');
+          header.innerHTML = `<h1>${projectName}</h1>`;
+          header.style.display = 'block';
+        }
+
         renderDashboard();
+        document.getElementById('loading').style.display = 'none';
       } catch (error) {
         console.error('Error:', error);
+        document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
         document.getElementById('error').textContent = 'Error loading products: ' + error.message;
       }
