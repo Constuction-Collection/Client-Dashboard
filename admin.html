@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Client Projects Report</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .auth-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+
+    .auth-section input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+
+    .auth-section button {
+      padding: 8px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .auth-section button:hover {
+      background: #45a049;
+    }
+
+    .error {
+      color: #d32f2f;
+      padding: 10px;
+      background: #ffebee;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .client-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .client-header {
+      background: #2196F3;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .client-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .client-company {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    .client-badge {
+      background: rgba(255,255,255,0.3);
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .client-body {
+      padding: 15px;
+    }
+
+    .project-list {
+      list-style: none;
+    }
+
+    .project-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .project-list li:last-child {
+      border-bottom: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Report - Client Projects</h1>
+
+    <div class="auth-section">
+      <input type="password" id="passwordInput" placeholder="Enter admin password" />
+      <button onclick="loadProjects()">Load Report</button>
+      <div id="error" class="error hidden"></div>
+    </div>
+
+    <div id="loading" class="loading hidden">Loading...</div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    function showError(msg) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = msg;
+      errorDiv.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('error').classList.add('hidden');
+    }
+
+    async function loadProjects() {
+      hideError();
+      const password = document.getElementById('passwordInput').value;
+
+      if (!password) {
+        showError('Please enter a password');
+        return;
+      }
+
+      const loading = document.getElementById('loading');
+      loading.classList.remove('hidden');
+
+      try {
+        const response = await fetch(`/api/admin/all-projects?password=${encodeURIComponent(password)}`);
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            showError('Invalid password');
+          } else {
+            showError('Failed to load projects');
+          }
+          loading.classList.add('hidden');
+          return;
+        }
+
+        const data = await response.json();
+        displayProjects(data);
+        loading.classList.add('hidden');
+
+      } catch (error) {
+        showError('Error: ' + error.message);
+        loading.classList.add('hidden');
+      }
+    }
+
+    function displayProjects(clients) {
+      const content = document.getElementById('content');
+
+      if (clients.length === 0) {
+        content.innerHTML = '<p style="color: #999;">No clients found.</p>';
+        return;
+      }
+
+      let html = '';
+
+      clients.forEach(client => {
+        html += `
+          <div class="client-card">
+            <div class="client-header">
+              <div>
+                <div class="client-name">${escapeHtml(client.contactName)}</div>
+                <div class="client-company">${escapeHtml(client.company)}</div>
+              </div>
+              <div class="client-badge">${client.projects.length} projects</div>
+            </div>
+            <div class="client-body">
+              ${client.projects.length > 0
+                ? `<ul class="project-list">
+                    ${client.projects.map(p => `<li>• ${escapeHtml(p)}</li>`).join('')}
+                   </ul>`
+                : '<p style="color: #999;">No projects assigned.</p>'
+              }
+            </div>
+          </div>
+        `;
+      });
+
+      content.innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Allow Enter key
+    document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loadProjects();
+    });
+  </script>
+</body>
+</html>

@@ -198,6 +198,80 @@ app.get('/api/client-projects', async (req, res) => {
   }
 });
 
+// Admin: Get all client-project mappings
+app.get('/api/admin/all-projects', async (req, res) => {
+  try {
+    const adminPassword = req.query.password;
+
+    // Simple password protection
+    if (adminPassword !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Fetch all contacts
+    const contactsResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/${CONTACTS_TABLE_ID}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        }
+      }
+    );
+
+    // Fetch all products
+    const productsResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/${COMPETITOR_PRODUCTS_TABLE_ID}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        }
+      }
+    );
+
+    // Map contacts to their projects
+    const clientProjects = {};
+
+    contactsResponse.data.records.forEach(contact => {
+      const contactId = contact.id;
+      const contactName = contact.fields['Contact Name'] || 'Unknown';
+      const company = contact.fields['Company'] || 'Unknown';
+
+      clientProjects[contactId] = {
+        contactName,
+        company,
+        projects: [],
+        productCount: 0
+      };
+    });
+
+    // Assign products to contacts
+    productsResponse.data.records.forEach(product => {
+      const contactNames = product.fields['Contact Name'] || [];
+      const project = product.fields['Project'];
+
+      contactNames.forEach(contactId => {
+        if (clientProjects[contactId] && project) {
+          if (!clientProjects[contactId].projects.includes(project)) {
+            clientProjects[contactId].projects.push(project);
+          }
+          clientProjects[contactId].productCount++;
+        }
+      });
+    });
+
+    // Convert to array and sort
+    const result = Object.values(clientProjects).sort((a, b) =>
+      a.company.localeCompare(b.company)
+    );
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Error fetching all projects:', error.message);
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
 // Fetch all projects for the dropdown
 app.get('/api/projects', async (req, res) => {
   try {
