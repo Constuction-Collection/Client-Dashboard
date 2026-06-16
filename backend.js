@@ -172,7 +172,7 @@ app.get('/api/client-projects', async (req, res) => {
 
     const projectMap = {};
     projectsTableResponse.data.records.forEach(proj => {
-      projectMap[proj.id] = proj.fields['Project'] || proj.id;
+      projectMap[proj.id] = proj.fields['Project Name'] || proj.id;
     });
     console.log(`Loaded ${Object.keys(projectMap).length} projects`);
 
@@ -186,21 +186,19 @@ app.get('/api/client-projects', async (req, res) => {
       }
     );
 
-    // Get unique projects for this contact AND company
+    // Get unique projects for this contact
     const clientProjectMap = {};
 
-    console.log(`DEBUG: Looking for contact ID: ${contactId}, company: ${company}`);
+    console.log(`DEBUG: Looking for products where Requesting Company = ${contactId}`);
     let matchCount = 0;
 
     productsResponse.data.records.forEach((record, index) => {
-      const contactIds = record.fields['Contact Name'] || [];
-      const requestingCompany = record.fields['Requesting Company'] || [];
+      const requestingCompanyIds = record.fields['Requesting Company'] || [];
 
-      // Only include if this contact ID is linked AND company matches
-      const isContactMatch = contactIds.includes(contactId);
-      const isCompanyMatch = requestingCompany.includes(company);
+      // Only include if this contact is the requesting company (linked field)
+      const isContactMatch = requestingCompanyIds.includes(contactId);
 
-      if (isContactMatch && isCompanyMatch) {
+      if (isContactMatch) {
         matchCount++;
         const projectIds = record.fields['Project'] || [];
         projectIds.forEach(projectId => {
@@ -288,31 +286,24 @@ app.get('/api/admin/all-projects', async (req, res) => {
 
     const projectIdToName = {};
     projectsResponse.data.records.forEach(proj => {
-      projectIdToName[proj.id] = proj.fields['Project'] || proj.id;
+      projectIdToName[proj.id] = proj.fields['Project Name'] || proj.id;
     });
 
     // Assign products to contacts
     productsResponse.data.records.forEach(product => {
-      const contactIds = product.fields['Contact Name'] || [];
+      const requestingCompanyIds = product.fields['Requesting Company'] || [];
       const projectIds = product.fields['Project'] || [];
-      const requestingCompanies = product.fields['Requesting Company'] || [];
 
-      contactIds.forEach(contactId => {
+      requestingCompanyIds.forEach(contactId => {
         // Contact ID directly matches the key in clientProjects
         if (clientProjects[contactId]) {
-          const contactCompany = clientProjects[contactId].company;
-          // Only include if requesting company matches contact's company
-          const isCompanyMatch = requestingCompanies.includes(contactCompany);
-
-          if (isCompanyMatch) {
-            projectIds.forEach(projectId => {
-              const projectName = projectIdToName[projectId] || projectId;
-              if (!clientProjects[contactId].projects.includes(projectName)) {
-                clientProjects[contactId].projects.push(projectName);
-              }
-              clientProjects[contactId].productCount++;
-            });
-          }
+          projectIds.forEach(projectId => {
+            const projectName = projectIdToName[projectId] || projectId;
+            if (!clientProjects[contactId].projects.includes(projectName)) {
+              clientProjects[contactId].projects.push(projectName);
+            }
+            clientProjects[contactId].productCount++;
+          });
         }
       });
     });
@@ -344,7 +335,7 @@ app.get('/api/projects', async (req, res) => {
     );
     
     const projects = response.data.records
-      .map(record => record.fields['Project'])
+      .map(record => record.fields['Project Name'])
       .filter(Boolean);
     
     res.json(projects);
