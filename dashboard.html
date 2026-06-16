@@ -595,6 +595,7 @@
           const competitorImages = getFieldValue(product, 'Competitor Product Images');
           const mySupplier = getFieldValue(product, 'My Supplier') || 'N/A';
           const roomSpec = getFieldValue(product, 'Room (from Competitor\'s Products)') || '';
+          const competitorNotes = getFieldValue(product, 'Competitor_Product_Notes') || '';
           const myNotes = getFieldValue(product, 'My Notes') || '';
           const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
 
@@ -631,6 +632,13 @@
                 <div class="room-spec">
                   <div class="section-label">Room Specification</div>
                   ${roomSpec}
+                </div>
+              ` : ''}
+
+              ${competitorNotes ? `
+                <div class="room-spec">
+                  <div class="section-label">Notes</div>
+                  ${competitorNotes}
                 </div>
               ` : ''}
 

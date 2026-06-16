@@ -61,15 +61,17 @@ app.get('/api/products', async (req, res) => {
                 console.log(`Product ${productId} fields:`, linkedResponse.data.fields);
                 return {
                   name: linkedResponse.data.fields['Competitor Product Name'] || 'Unknown Product',
-                  quantity: linkedResponse.data.fields['Quantity'] || 1
+                  quantity: linkedResponse.data.fields['Quantity'] || 1,
+                  notes: linkedResponse.data.fields['Notes'] || ''
                 };
               })
             );
 
             console.log(`Enriched product data for ${record.id}:`, productData);
-            // Add the product names and quantities to the record (use different field name to avoid conflict with lookup field)
+            // Add the product names, quantities, and notes to the record (use different field name to avoid conflict with lookup field)
             record.fields['Competitor_Product_Name_Text'] = productData[0].name;
             record.fields['Competitor Product Quantity'] = productData[0].quantity;
+            record.fields['Competitor_Product_Notes'] = productData[0].notes;
           } catch (err) {
             console.error(`Error enriching record ${record.id}:`, err.message);
             record.fields['Competitor Product Name'] = 'Error loading product name';
