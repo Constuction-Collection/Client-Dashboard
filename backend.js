@@ -160,6 +160,22 @@ app.get('/api/client-projects', async (req, res) => {
 
     console.log(`Looking for projects for contact ${contactName} (${contactId}) at ${company}`);
 
+    // Fetch all projects to map IDs to names
+    const projectsTableResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/Projects`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        }
+      }
+    );
+
+    const projectMap = {};
+    projectsTableResponse.data.records.forEach(proj => {
+      projectMap[proj.id] = proj.fields['Project'] || proj.id;
+    });
+    console.log(`Loaded ${Object.keys(projectMap).length} projects`);
+
     // Get all Competitor's Products records
     const productsResponse = await axios.get(
       `https://api.airtable.com/v0/${BASE_ID}/${COMPETITOR_PRODUCTS_TABLE_ID}`,
@@ -171,28 +187,28 @@ app.get('/api/client-projects', async (req, res) => {
     );
 
     // Get unique projects for this contact AND company
-    const projectMap = {};
+    const clientProjectMap = {};
 
-    console.log(`DEBUG: Looking for contact NAME: ${contactName}`);
+    console.log(`DEBUG: Looking for contact ID: ${contactId}, company: ${company}`);
     let matchCount = 0;
 
     productsResponse.data.records.forEach((record, index) => {
-      const contactNames = record.fields['Contact Name'] || [];
+      const contactIds = record.fields['Contact Name'] || [];
+      const requestingCompany = record.fields['Requesting Company'] || [];
 
-      console.log(`DEBUG: Record ${index} has contacts:`, contactNames);
+      // Only include if this contact ID is linked AND company matches
+      const isContactMatch = contactIds.includes(contactId);
+      const isCompanyMatch = requestingCompany.includes(company);
 
-      // Only include if this contact is linked (match by contact NAME, not ID)
-      const isContactMatch = contactNames.includes(contactName);
-
-      if (isContactMatch) {
+      if (isContactMatch && isCompanyMatch) {
         matchCount++;
-        console.log(`DEBUG: MATCH FOUND! Record ${index} matches contact ${contactName}`);
         const projectIds = record.fields['Project'] || [];
         projectIds.forEach(projectId => {
-          if (!projectMap[projectId]) {
-            projectMap[projectId] = { name: projectId, productCount: 0, isCompleted: false };
+          const projectName = projectMap[projectId] || projectId;
+          if (!clientProjectMap[projectId]) {
+            clientProjectMap[projectId] = { name: projectName, productCount: 0, isCompleted: false };
           }
-          projectMap[projectId].productCount++;
+          clientProjectMap[projectId].productCount++;
         });
       }
     });
@@ -200,7 +216,7 @@ app.get('/api/client-projects', async (req, res) => {
     console.log(`DEBUG: Total matches for ${contactId}: ${matchCount}`);
 
     // Convert to array and sort
-    const projects = Object.values(projectMap).sort((a, b) => a.name.localeCompare(b.name));
+    const projects = Object.values(clientProjectMap).sort((a, b) => a.name.localeCompare(b.name));
     console.log(`Found ${projects.length} projects for ${company}`);
 
     res.json(projects);
@@ -260,22 +276,43 @@ app.get('/api/admin/all-projects', async (req, res) => {
       };
     });
 
+    // Fetch projects to map IDs to names
+    const projectsResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/Projects`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        }
+      }
+    );
+
+    const projectIdToName = {};
+    projectsResponse.data.records.forEach(proj => {
+      projectIdToName[proj.id] = proj.fields['Project'] || proj.id;
+    });
+
     // Assign products to contacts
     productsResponse.data.records.forEach(product => {
-      const contactNames = product.fields['Contact Name'] || [];
+      const contactIds = product.fields['Contact Name'] || [];
       const projectIds = product.fields['Project'] || [];
+      const requestingCompanies = product.fields['Requesting Company'] || [];
 
-      contactNames.forEach(contactName => {
-        // Find contact by name (Contact Name field stores contact names, not IDs)
-        const contactKey = Object.keys(clientProjects).find(id => clientProjects[id].contactName === contactName);
+      contactIds.forEach(contactId => {
+        // Contact ID directly matches the key in clientProjects
+        if (clientProjects[contactId]) {
+          const contactCompany = clientProjects[contactId].company;
+          // Only include if requesting company matches contact's company
+          const isCompanyMatch = requestingCompanies.includes(contactCompany);
 
-        if (contactKey) {
-          projectIds.forEach(projectId => {
-            if (!clientProjects[contactKey].projects.includes(projectId)) {
-              clientProjects[contactKey].projects.push(projectId);
-            }
-            clientProjects[contactKey].productCount++;
-          });
+          if (isCompanyMatch) {
+            projectIds.forEach(projectId => {
+              const projectName = projectIdToName[projectId] || projectId;
+              if (!clientProjects[contactId].projects.includes(projectName)) {
+                clientProjects[contactId].projects.push(projectName);
+              }
+              clientProjects[contactId].productCount++;
+            });
+          }
         }
       });
     });
@@ -307,7 +344,7 @@ app.get('/api/projects', async (req, res) => {
     );
     
     const projects = response.data.records
-      .map(record => record.fields['Project Name'])
+      .map(record => record.fields['Project'])
       .filter(Boolean);
     
     res.json(projects);
