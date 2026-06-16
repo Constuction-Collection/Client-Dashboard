@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const PDFDocument = require('pdfkit');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -344,6 +346,131 @@ app.get('/api/projects', async (req, res) => {
   } catch (error) {
     console.error('Error fetching projects:', error.message);
     res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
+// Generate summary PDF and send emails
+app.post('/api/generate-summary', async (req, res) => {
+  try {
+    const { project, selectedProducts, contactName, company, email, totals } = req.body;
+
+    if (!selectedProducts || selectedProducts.length === 0) {
+      return res.status(400).json({ error: 'No products selected' });
+    }
+
+    // Create PDF
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    const buffers = [];
+
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', async () => {
+      const pdfBuffer = Buffer.concat(buffers);
+
+      // Send emails
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          }
+        });
+
+        const emailContent = `
+Hello ${contactName},
+
+Your product comparison summary for project "${project}" is attached.
+
+Selected Products: ${selectedProducts.length}
+Your Total: $${totals.yourTotal.toFixed(2)}
+Competitor Total: $${totals.competitorTotal.toFixed(2)}
+Total Savings: $${totals.savings.toFixed(2)} (${totals.savingsPercent}%)
+
+Thank you for using our service.
+
+Best regards,
+Benard Chedid
+Construction Collection
+        `;
+
+        // Email to client
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: `Product Summary - ${project}`,
+          text: emailContent,
+          attachments: [{
+            filename: `summary_${project}.pdf`,
+            content: pdfBuffer
+          }]
+        });
+
+        // Email to Benard
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: process.env.EMAIL_USER,
+          subject: `[NEW] Product Summary from ${contactName} - ${company}`,
+          text: `${contactName} from ${company} (${email}) has submitted a product summary for project: ${project}\n\n${emailContent}`,
+          attachments: [{
+            filename: `summary_${project}_${contactName}.pdf`,
+            content: pdfBuffer
+          }]
+        });
+
+        console.log(`Summary emails sent for ${project} to ${email} and benard@constructioncollection.com.au`);
+      } catch (emailError) {
+        console.error('Email error:', emailError.message);
+        // Don't fail the request if email fails - PDF is still valid
+      }
+
+      // Return PDF for download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="summary_${project}.pdf"`);
+      res.send(pdfBuffer);
+    });
+
+    // Build PDF content
+    doc.fontSize(24).font('Helvetica-Bold').text('Product Summary', { align: 'center' });
+    doc.moveDown();
+
+    doc.fontSize(12).font('Helvetica').text(`Project: ${project}`, { underline: true });
+    doc.text(`Contact: ${contactName}`);
+    doc.text(`Company: ${company}`);
+    doc.text(`Email: ${email}`);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`);
+    doc.moveDown();
+
+    doc.fontSize(14).font('Helvetica-Bold').text('Selected Products', { underline: true });
+    doc.moveDown(0.5);
+
+    selectedProducts.forEach((product, idx) => {
+      doc.fontSize(11).font('Helvetica-Bold').text(`${idx + 1}. ${product.name}`);
+      doc.fontSize(10).font('Helvetica');
+      doc.text(`Group: ${product.groupName}`);
+      if (product.room) doc.text(`Room: ${product.room}`);
+      doc.text(`Quantity: ${product.quantity}`);
+      doc.text(`Your Price per Unit: $${product.myPrice.toFixed(2)}`);
+      doc.text(`Competitor Price per Unit: $${product.competitorPrice.toFixed(2)}`);
+      doc.text(`Your Total: $${product.myTotal.toFixed(2)}`);
+      doc.text(`Competitor Total: $${product.competitorTotal.toFixed(2)}`);
+      if (product.myNotes) doc.text(`My Notes: ${product.myNotes}`);
+      if (product.competitorNotes) doc.text(`Notes: ${product.competitorNotes}`);
+      doc.moveDown(0.5);
+    });
+
+    doc.moveDown();
+    doc.fontSize(12).font('Helvetica-Bold').text('Summary Totals', { underline: true });
+    doc.fontSize(11).font('Helvetica');
+    doc.text(`Your Total: $${totals.yourTotal.toFixed(2)}`);
+    doc.text(`Competitor Total: $${totals.competitorTotal.toFixed(2)}`);
+    doc.text(`Total Savings: $${totals.savings.toFixed(2)} (${totals.savingsPercent}%)`);
+
+    doc.end();
+  } catch (error) {
+    console.error('Error generating summary:', error.message);
+    res.status(500).json({ error: 'Failed to generate summary' });
   }
 });
 

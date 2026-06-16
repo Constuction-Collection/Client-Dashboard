@@ -818,10 +818,109 @@
           <span>Total Project Savings:</span>
           <span class="total-savings">$${totalSavings.toFixed(2)} (${savingsPercent}%)</span>
         </div>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #667eea;">
+          <button onclick="downloadAndSubmit()" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;">
+            📥 Download Summary & Submit
+          </button>
+        </div>
       `;
 
       summaryContent.innerHTML = html;
       summary.style.display = selectedCount > 0 ? 'block' : 'none';
+    }
+
+    async function downloadAndSubmit() {
+      // Collect selected products data
+      const selectedData = {
+        project: currentProject,
+        selectedProducts: [],
+        contactName: '',
+        company: '',
+        email: '',
+        totals: {}
+      };
+
+      // Calculate totals and collect product info
+      let totalYourPrice = 0;
+      let totalCompetitorPrice = 0;
+
+      Object.keys(selectedProducts).forEach(groupName => {
+        const index = selectedProducts[groupName];
+        const product = allProducts[index];
+        const fields = product.fields;
+
+        const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+        const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+        const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+        const myTotal = (myPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
+        const competitorTotal = (competitorPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
+
+        selectedData.selectedProducts.push({
+          name: productName,
+          groupName: groupName,
+          myPrice: myPrice,
+          competitorPrice: competitorPrice,
+          quantity: parseFloat(getFieldValue(product, 'Quantity')) || 1,
+          myTotal: myTotal,
+          competitorTotal: competitorTotal,
+          room: getFieldValue(product, 'Room (from Competitor\'s Products)') || '',
+          myNotes: getFieldValue(product, 'My Notes') || '',
+          competitorNotes: getFieldValue(product, 'Competitor_Product_Notes') || '',
+          myImages: getFieldValue(product, 'My Product Photos') || '',
+          competitorImages: getFieldValue(product, 'Competitor Product Images') || ''
+        });
+
+        totalYourPrice += myTotal;
+        totalCompetitorPrice += competitorTotal;
+      });
+
+      selectedData.totals = {
+        yourTotal: totalYourPrice,
+        competitorTotal: totalCompetitorPrice,
+        savings: totalCompetitorPrice - totalYourPrice,
+        savingsPercent: totalCompetitorPrice > 0 ? ((totalCompetitorPrice - totalYourPrice) / totalCompetitorPrice * 100).toFixed(1) : 0
+      };
+
+      // Get client info from URL or session
+      const email = new URLSearchParams(window.location.search).get('email');
+
+      try {
+        // Fetch client info
+        const clientResponse = await fetch(`${API_URL}/authenticate?email=${encodeURIComponent(email)}`);
+        if (clientResponse.ok) {
+          const clientData = await clientResponse.json();
+          selectedData.contactName = clientData.contactName;
+          selectedData.company = clientData.company;
+          selectedData.email = email;
+        }
+
+        // Send to backend for PDF generation and email
+        const response = await fetch(`${API_URL}/generate-summary`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(selectedData)
+        });
+
+        if (response.ok) {
+          // Download PDF
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `summary_${currentProject}_${new Date().toISOString().split('T')[0]}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          alert('✅ Summary downloaded and submitted! Check your email for confirmation.');
+        } else {
+          alert('❌ Error generating summary. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error submitting summary: ' + error.message);
+      }
     }
 
     // Fetch projects on page load
