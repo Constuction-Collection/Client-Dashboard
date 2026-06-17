@@ -40,9 +40,12 @@
     }
 
     .header-logo {
-      height: 60px;
+      height: 70px;
       display: flex;
       align-items: center;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 8px;
     }
 
     .header-logo img {
@@ -482,11 +485,11 @@
     <div class="header" id="header" style="display: none;">
       <div class="header-content">
         <div class="header-logo">
-          <img src="cc-logo.png" alt="Construction Collection">
+          <img src="/cc-logo.png" alt="Construction Collection" onerror="this.style.display='none'">
         </div>
         <div class="header-title">
           <div class="company-name">Construction Collection</div>
-          <h1>Product Comparison & Selection</h1>
+          <h1 id="pageTitle">Product Comparison & Selection</h1>
         </div>
       </div>
       <div class="project-selector">
@@ -585,17 +588,7 @@
         // If project was passed via URL, show a simple title instead of the dropdown
         if (urlProject) {
           const header = document.getElementById('header');
-          header.innerHTML = `
-            <div class="header-content">
-              <div class="header-logo">
-                <img src="cc-logo.png" alt="Construction Collection">
-              </div>
-              <div class="header-title">
-                <div class="company-name">Construction Collection</div>
-                <h1>${projectName}</h1>
-              </div>
-            </div>
-          `;
+          document.getElementById('pageTitle').textContent = projectName;
           header.style.display = 'block';
         }
 
