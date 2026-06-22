@@ -339,11 +339,11 @@ app.get('/api/projects', async (req, res) => {
         }
       }
     );
-    
+
     const projects = response.data.records
       .map(record => record.fields['Project Name'])
       .filter(Boolean);
-    
+
     res.json(projects);
   } catch (error) {
     console.error('Error fetching projects:', error.message);

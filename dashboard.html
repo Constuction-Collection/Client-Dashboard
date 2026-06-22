@@ -123,6 +123,9 @@
     }
 
     .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 24px;
       font-weight: 400;
       color: #1a1a1a;
@@ -132,12 +135,38 @@
       letter-spacing: -0.3px;
     }
 
-    .option-item {
-      border: 1px solid #e8e8e8;
+    .card-header-title {
+      flex: 1;
+    }
+
+    .option-count-badge {
+      background: #f0fafb;
+      color: #2d7a7a;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid #d0e8e8;
+    }
+
+    .options-container {
+      border: 1px solid #d0e8e8;
       border-radius: 10px;
+      padding: 0;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .option-item {
+      border: none;
+      border-bottom: 1px solid #d0e8e8;
+      border-radius: 0;
       padding: 25px;
-      margin-bottom: 25px;
+      margin-bottom: 0;
       transition: all 0.3s ease;
+      background: white;
     }
 
     .option-item-content {
@@ -145,12 +174,16 @@
     }
 
     .option-item:last-child {
+      border-bottom: none;
       margin-bottom: 0;
     }
 
     .option-item.selected {
-      border-color: #2d7a7a;
       background: #f0fafb;
+    }
+
+    .option-item.selected .option-header {
+      color: #2d7a7a;
     }
 
     .option-header {
@@ -643,7 +676,14 @@
         const card = document.createElement('div');
         card.className = 'product-card';
 
-        let optionsHtml = `<div class="card-header">${groupName}</div>`;
+        const optionCount = options.length;
+        let optionsHtml = `
+          <div class="card-header">
+            <div class="card-header-title">${groupName}</div>
+            <div class="option-count-badge">Select 1 of ${optionCount}</div>
+          </div>
+          <div class="options-container">
+        `;
 
         options.forEach(({ product, index }) => {
           const fields = product.fields;
@@ -748,6 +788,8 @@
             </div>
           `;
         });
+
+        optionsHtml += `</div>`; // Close options-container
 
         card.innerHTML = optionsHtml;
         dashboard.appendChild(card);

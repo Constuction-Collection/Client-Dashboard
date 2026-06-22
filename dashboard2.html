@@ -188,20 +188,67 @@
       margin-bottom: 25px;
     }
 
-    .product-image {
+    .product-image-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .product-image-main {
       background: #fafaf9;
       border-radius: 10px;
       overflow: hidden;
-      height: 250px;
+      height: 300px;
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
+      transition: box-shadow 0.3s ease;
     }
 
-    .product-image img {
+    .product-image-main:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .product-image-main img {
       width: 100%;
       height: 100%;
       object-fit: contain;
+    }
+
+    .product-thumbnails {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+
+    .product-thumbnail {
+      width: 60px;
+      height: 60px;
+      background: #fafaf9;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid #e0e0e0;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .product-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .product-thumbnail:hover {
+      border-color: #2d7a7a;
+      box-shadow: 0 2px 8px rgba(45, 122, 122, 0.2);
+    }
+
+    .product-thumbnail.active {
+      border-color: #2d7a7a;
+      box-shadow: 0 4px 12px rgba(45, 122, 122, 0.3);
     }
 
     .product-info {
@@ -605,6 +652,23 @@
       return null;
     }
 
+    function switchImage(productIndex, imageIndex) {
+      const mainImg = document.getElementById(`mainImg-${productIndex}`);
+      const thumbnails = document.querySelectorAll(`#thumbnails-${productIndex} .product-thumbnail`);
+
+      if (mainImg && allProducts[productIndex]) {
+        const images = getFieldValue(allProducts[productIndex], 'My Product Photos');
+        if (images && images[imageIndex]) {
+          mainImg.src = images[imageIndex].url;
+
+          // Update active thumbnail
+          thumbnails.forEach((thumb, idx) => {
+            thumb.classList.toggle('active', idx === imageIndex);
+          });
+        }
+      }
+    }
+
     function renderDashboard() {
       const dashboard = document.getElementById('dashboard');
       dashboard.innerHTML = '';
@@ -652,14 +716,25 @@
               </div>
 
               <div class="product-details">
-                <div class="product-image">
-                  ${myImages ? `<img src="${getImageUrl(myImages)}" alt="Product">` : '<div style="color: #ccc;">No Image</div>'}
+                <div class="product-image-container">
+                  <div class="product-image-main" id="mainImage-${index}">
+                    ${myImages ? `<img src="${getImageUrl(myImages)}" alt="Product" id="mainImg-${index}">` : '<div style="color: #ccc;">No Image</div>'}
+                  </div>
+                  ${myImages && myImages.length > 1 ? `
+                    <div class="product-thumbnails" id="thumbnails-${index}">
+                      ${myImages.map((img, imgIdx) => `
+                        <div class="product-thumbnail ${imgIdx === 0 ? 'active' : ''}" onclick="switchImage(${index}, ${imgIdx})" title="Image ${imgIdx + 1}">
+                          <img src="${img.url}" alt="Image ${imgIdx + 1}">
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
                 </div>
                 <div class="product-info">
                   ${room ? `<div class="info-row"><div class="info-label">Area/Room</div><div class="info-value">${room}</div></div>` : ''}
-                  ${mySize ? `<div class="info-row"><div class="info-label">Size</div><div class="info-value">${mySize}</div></div>` : ''}
+                  ${mySize ? `<div class="info-row"><div class="info-label">Specified Size</div><div class="info-value">${mySize}</div></div>` : ''}
                   <div class="info-row"><div class="info-label">Quantity</div><div class="info-value">${quantity}</div></div>
-                  <div class="info-row"><div class="info-label">Unit Price</div><div class="info-value">$${price.toFixed(2)}</div></div>
+                  <div class="info-row"><div class="info-label">Budgeted Price</div><div class="info-value">$${price.toFixed(2)}</div></div>
                   ${myNotes ? `<div class="info-row"><div class="info-label">Notes</div><div class="info-value">${myNotes}</div></div>` : ''}
                 </div>
               </div>
