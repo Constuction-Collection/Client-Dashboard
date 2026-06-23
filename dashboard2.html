@@ -338,10 +338,37 @@
       font-weight: 400;
     }
 
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: 0.8px;
+    }
+
+    .room-spec {
+      background: #f8f7f5;
+      border-left: 3px solid #2d7a7a;
+      padding: 16px 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .notes-section {
+      background: #f9f8f6;
+      border-left: 3px solid #d9a574;
+      padding: 16px 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
     .pricing-section {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e0e0;
+      background: #f9fafb;
+      border-left: 3px solid #2d7a7a;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
     }
 
     .price-row {
@@ -425,10 +452,8 @@
       position: sticky;
       top: 20px;
       width: 260px;
-      background: #f5f5f5;
-      padding: 20px;
-      border-radius: 10px;
       height: fit-content;
+      background: white;
       flex-shrink: 0;
     }
 
@@ -460,7 +485,7 @@
       font-size: 13px;
       cursor: pointer;
       text-align: left;
-      color: #666;
+      color: #333;
       transition: all 0.2s;
       border-left: 3px solid transparent;
     }
@@ -474,6 +499,7 @@
       background: #eef5f5;
       border-left-color: #2d7a7a;
       font-weight: 600;
+      color: #2d7a7a;
     }
 
     .content-wrapper {
@@ -795,13 +821,17 @@
                   </div>
                 </div>
 
-                <div class="product-info">
-                  ${room ? `<div class="info-row"><div class="info-label">Area/Room</div><div class="info-value">${room}</div></div>` : ''}
-                  ${mySize ? `<div class="info-row"><div class="info-label">Specified Size</div><div class="info-value">${mySize}</div></div>` : ''}
-                  <div class="info-row"><div class="info-label">Quantity</div><div class="info-value">${quantity}</div></div>
+                <div class="room-spec">
+                  <div class="section-label">Room Specification</div>
+                  <div class="product-info">
+                    ${room ? `<div class="info-row"><div class="info-label">Area/Room</div><div class="info-value">${room}</div></div>` : ''}
+                    ${mySize ? `<div class="info-row"><div class="info-label">Specified Size</div><div class="info-value">${mySize}</div></div>` : ''}
+                    <div class="info-row"><div class="info-label">Quantity</div><div class="info-value">${quantity}</div></div>
+                  </div>
                 </div>
 
                 <div class="pricing-section">
+                  <div class="section-label">Pricing</div>
                   <div class="price-row">
                     <span>Your Price per Unit:</span>
                     <span>$${price.toFixed(2)}</span>
@@ -821,9 +851,9 @@
                 </div>
 
                 ${myNotes ? `
-                  <div class="my-notes">
-                    <div class="my-notes-label">My Notes</div>
-                    <div class="my-notes-content">${myNotes}</div>
+                  <div class="notes-section">
+                    <div class="section-label">My Notes</div>
+                    <div>${myNotes}</div>
                   </div>
                 ` : ''}
               </div>
