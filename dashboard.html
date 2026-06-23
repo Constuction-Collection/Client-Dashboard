@@ -692,16 +692,10 @@
 
         const optionCount = options.length;
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
-
-        // If only one option, auto-select it
-        if (optionCount === 1 && !selectedProducts[groupName]) {
-          selectedProducts[groupName] = [options[0].index];
-        }
-
         let optionsHtml = `
           <div class="card-header">
             <div class="card-header-title">${groupName}</div>
-            ${optionCount > 1 ? `<div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>` : ''}
+            <div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>
           </div>
           <div class="options-container">
         `;
@@ -729,13 +723,11 @@
 
           optionsHtml += `
             <div class="${optionClass}" id="option-${index}">
-              ${optionCount > 1 ? `
-                <div class="option-header">
-                  <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
-                    ${isSelected ? '✓ Selected' : 'Select'}
-                  </button>
-                </div>
-              ` : ''}
+              <div class="option-header">
+                <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
+                  ${isSelected ? '✓ Selected' : 'Select'}
+                </button>
+              </div>
 
               <div class="option-item-content">
                 <div class="images">

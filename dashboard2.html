@@ -627,10 +627,6 @@
         <ul class="sidebar-list" id="sidebarList"></ul>
       </div>
       <div class="content-wrapper">
-        <div class="budget-tracker" id="budgetTracker" style="display: none;">
-          <div class="budget-header">Budget Overview</div>
-          <div id="budgetContent"></div>
-        </div>
         <div class="dashboard" id="dashboard"></div>
         <div class="summary" id="summary" style="display: none;">
           <h2>Project Summary</h2>
@@ -771,13 +767,11 @@
       }
 
       renderDashboard();
-      updateBudgetTracker();
       updateSummary();
     }
 
     function setOptionForCost(groupName, index) {
       selectedForCost[groupName] = index;
-      updateBudgetTracker();
       updateSummary();
     }
 
@@ -826,16 +820,10 @@
 
         const optionCount = options.length;
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
-
-        // If only one option, auto-select it
-        if (optionCount === 1 && !selectedProducts[groupName]) {
-          selectedProducts[groupName] = [options[0].index];
-        }
-
         let optionsHtml = `
           <div class="card-header">
             <div class="card-header-title">${groupName}</div>
-            ${optionCount > 1 ? `<div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>` : ''}
+            <div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>
           </div>
           <div class="options-container">
         `;
@@ -855,13 +843,11 @@
 
           optionsHtml += `
             <div class="${optionClass}" id="product-${index}">
-              ${optionCount > 1 ? `
-                <div class="option-header">
-                  <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
-                    ${isSelected ? '✓ Selected' : 'Select'}
-                  </button>
-                </div>
-              ` : ''}
+              <div class="option-header">
+                <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
+                  ${isSelected ? '✓ Selected' : 'Select'}
+                </button>
+              </div>
               <div class="product-header">
                 <div class="product-name">${productName}</div>
               </div>
@@ -918,7 +904,6 @@
       });
 
       populateSidebar(sortedGroupNames);
-      updateBudgetTracker();
       updateSummary();
 
       document.getElementById('mainWrapper').style.display = 'flex';
