@@ -557,7 +557,8 @@
       ? 'http://localhost:3000/api'
       : 'https://client-dashboard-ugki.onrender.com/api';
     let allProducts = [];
-    let selectedProducts = {}; // Track multiple selections by product index
+    let selectedProducts = {}; // Track multiple selections for samples
+    let selectedForCost = {}; // Track which option is used for cost calculation (one per group)
     let currentProject = null;
 
     // Get project from URL parameter
@@ -566,14 +567,25 @@
 
     async function fetchProjects() {
       try {
+        // Check if email is in URL - required for authentication
+        const email = new URLSearchParams(window.location.search).get('email');
+
+        if (!email) {
+          // No email - cannot proceed without authentication
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = 'Please login with your email first.';
+          return;
+        }
+
         // If a project is in the URL, skip the dropdown and load products directly
         if (urlProject) {
           fetchProductsForProject(urlProject);
           return;
         }
 
-        // Otherwise, show the dropdown to select a project
-        const response = await fetch(`${API_URL}/projects`);
+        // Fetch ONLY this client's projects (filtered by email)
+        const response = await fetch(`${API_URL}/client-projects?email=${encodeURIComponent(email)}`);
         if (!response.ok) throw new Error('Failed to fetch projects');
 
         const projects = await response.json();
@@ -612,6 +624,7 @@
       try {
         currentProject = projectName;
         selectedProducts = {}; // Reset selections
+        selectedForCost = {}; // Reset cost selections
 
         const response = await fetch(`${API_URL}/products?project=${encodeURIComponent(projectName)}`);
         if (!response.ok) throw new Error('Failed to fetch products');
@@ -677,10 +690,11 @@
         card.className = 'product-card';
 
         const optionCount = options.length;
+        const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
         let optionsHtml = `
           <div class="card-header">
             <div class="card-header-title">${groupName}</div>
-            <div class="option-count-badge">Select 1 of ${optionCount}</div>
+            <div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>
           </div>
           <div class="options-container">
         `;
@@ -703,7 +717,7 @@
           const myNotes = getFieldValue(product, 'My Notes') || '';
           const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
 
-          const isSelected = selectedProducts[groupName] === index;
+          const isSelected = selectedProducts[groupName] && selectedProducts[groupName].includes(index);
           const optionClass = isSelected ? 'option-item selected' : 'option-item';
 
           optionsHtml += `
@@ -857,14 +871,33 @@
     }
 
     function toggleProduct(index, groupName) {
-      if (selectedProducts[groupName] === index) {
-        // Deselect if clicking the same option
-        delete selectedProducts[groupName];
-      } else {
-        // Select this option (only one per group)
-        selectedProducts[groupName] = index;
+      // Initialize as array if not exists
+      if (!selectedProducts[groupName]) {
+        selectedProducts[groupName] = [];
       }
+
+      const selectedArray = selectedProducts[groupName];
+      const indexPosition = selectedArray.indexOf(index);
+
+      if (indexPosition > -1) {
+        // Already selected - remove it
+        selectedArray.splice(indexPosition, 1);
+      } else {
+        // Not selected - add it
+        selectedArray.push(index);
+      }
+
+      // Clean up empty arrays
+      if (selectedArray.length === 0) {
+        delete selectedProducts[groupName];
+      }
+
       renderDashboard();
+      updateSummary();
+    }
+
+    function setOptionForCost(groupName, index) {
+      selectedForCost[groupName] = index;
       updateSummary();
     }
 
@@ -876,13 +909,31 @@
       let totalCompetitorPrice = 0;
       let selectedCount = 0;
       let selectedItems = [];
+      let costSelectionItems = {};
 
-      // Iterate through selected products (one per group)
+      // Collect all samples
       Object.keys(selectedProducts).forEach(groupName => {
-        const index = selectedProducts[groupName];
-        const product = allProducts[index];
-        const fields = product.fields;
-        const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+        const selectedIndices = selectedProducts[groupName];
+        costSelectionItems[groupName] = selectedIndices;
+
+        selectedIndices.forEach(index => {
+          const product = allProducts[index];
+          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+          selectedCount++;
+          selectedItems.push({
+            groupName: groupName,
+            name: productName,
+            index: index
+          });
+        });
+      });
+
+      // Calculate totals based on selectedForCost (one option per group)
+      Object.keys(costSelectionItems).forEach(groupName => {
+        const costIndex = selectedForCost[groupName];
+        const indexToUse = costIndex !== undefined ? costIndex : costSelectionItems[groupName][0];
+
+        const product = allProducts[indexToUse];
         const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
         const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
         const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
@@ -892,34 +943,45 @@
 
         totalYourPrice += yourTotal;
         totalCompetitorPrice += competitorTotal;
-        selectedCount++;
-        selectedItems.push({
-          groupName: groupName,
-          name: productName,
-          yourPrice: myPrice,
-          competitorPrice: competitorPrice,
-          quantity: quantity,
-          yourTotal: yourTotal,
-          competitorTotal: competitorTotal
-        });
       });
 
       const totalSavings = totalCompetitorPrice - totalYourPrice;
       const savingsPercent = totalCompetitorPrice > 0 ? (totalSavings / totalCompetitorPrice * 100).toFixed(1) : 0;
 
-      let html = '<div class="summary-row"><span class="summary-label">Selected Products:</span><span class="summary-value">' + selectedCount + '</span></div>';
+      let html = '<div class="summary-row"><span class="summary-label">Samples to Order:</span><span class="summary-value">' + selectedCount + '</span></div>';
 
       selectedItems.forEach(item => {
         html += `
-          <div class="summary-row">
-            <span class="summary-label"><strong>${item.groupName}</strong></span>
-          </div>
-          <div class="summary-row" style="padding-left: 20px; font-size: 14px;">
-            <span class="summary-label">${item.name} (Qty: ${item.quantity})</span>
-            <span class="summary-value">$${item.yourTotal.toFixed(2)}</span>
+          <div class="summary-row" style="padding-left: 20px; font-size: 13px;">
+            <span class="summary-label">${item.groupName} - ${item.name}</span>
           </div>
         `;
       });
+
+      html += '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #2d7a7a;"><div class="summary-label" style="margin-bottom: 15px; font-weight: 600; color: #1a1a1a;">Choose option for project total:</div>';
+
+      // Show cost selection options
+      Object.keys(costSelectionItems).forEach(groupName => {
+        const selectedIndices = costSelectionItems[groupName];
+        html += `<div style="margin-bottom: 18px;"><div style="font-weight: 500; margin-bottom: 10px; color: #2d7a7a;">${groupName}</div>`;
+
+        selectedIndices.forEach(index => {
+          const product = allProducts[index];
+          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+          const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+          const isSelected = selectedForCost[groupName] === index;
+
+          html += `
+            <div style="margin-left: 10px; margin-bottom: 8px;">
+              <input type="radio" id="cost-option-${index}" name="cost-${groupName}" value="${index}" ${isSelected ? 'checked' : ''} onchange="setOptionForCost('${groupName}', ${index})">
+              <label for="cost-option-${index}" style="margin-left: 8px; cursor: pointer; color: #333;">${productName} - $${myPrice.toFixed(2)}</label>
+            </div>
+          `;
+        });
+        html += '</div>';
+      });
+
+      html += '</div>';
 
       html += `
         <div class="total-row">
@@ -961,23 +1023,25 @@
       let totalCompetitorPrice = 0;
 
       Object.keys(selectedProducts).forEach(groupName => {
-        const index = selectedProducts[groupName];
-        const product = allProducts[index];
-        const fields = product.fields;
+        const selectedIndices = selectedProducts[groupName];
 
-        const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
-        const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
-        const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
-        const myTotal = (myPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
-        const competitorTotal = (competitorPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
+        selectedIndices.forEach(index => {
+          const product = allProducts[index];
+          const fields = product.fields;
 
-        selectedData.selectedProducts.push({
-          name: productName,
-          groupName: groupName,
-          myPrice: myPrice,
-          competitorPrice: competitorPrice,
-          quantity: parseFloat(getFieldValue(product, 'Quantity')) || 1,
-          myTotal: myTotal,
+          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+          const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+          const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+          const myTotal = (myPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
+          const competitorTotal = (competitorPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
+
+          selectedData.selectedProducts.push({
+            name: productName,
+            groupName: groupName,
+            myPrice: myPrice,
+            competitorPrice: competitorPrice,
+            quantity: parseFloat(getFieldValue(product, 'Quantity')) || 1,
+            myTotal: myTotal,
           competitorTotal: competitorTotal,
           room: getFieldValue(product, 'Room (from Competitor\'s Products)') || '',
           myNotes: getFieldValue(product, 'My Notes') || '',
@@ -986,8 +1050,9 @@
           competitorImages: getFieldValue(product, 'Competitor Product Images') || ''
         });
 
-        totalYourPrice += myTotal;
-        totalCompetitorPrice += competitorTotal;
+          totalYourPrice += myTotal;
+          totalCompetitorPrice += competitorTotal;
+        });
       });
 
       selectedData.totals = {
