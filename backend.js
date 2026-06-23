@@ -231,6 +231,95 @@ app.get('/api/client-projects', async (req, res) => {
   }
 });
 
+// Get client projects with their types (for routing to correct dashboard)
+app.get('/api/client-projects-with-types', async (req, res) => {
+  try {
+    const email = req.query.email;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Find the contact by email
+    const contactResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/${CONTACTS_TABLE_ID}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        },
+        params: {
+          filterByFormula: `{Email} = "${email}"`
+        }
+      }
+    );
+
+    const contacts = contactResponse.data.records;
+    if (contacts.length === 0) {
+      return res.status(404).json({ error: 'Email not found' });
+    }
+
+    const contactId = contacts[0].id;
+    const contactName = contacts[0].fields['Contact Name'];
+
+    // Fetch all projects to map IDs to names and types
+    const projectsTableResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/Projects`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        }
+      }
+    );
+
+    const projectMap = {};
+    projectsTableResponse.data.records.forEach(proj => {
+      projectMap[proj.id] = {
+        name: proj.fields['Project Name'] || proj.id,
+        type: proj.fields['Project Type'] || 'Comparison'
+      };
+    });
+
+    // Get all Competitor's Products records
+    const productsResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/${COMPETITOR_PRODUCTS_TABLE_ID}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        }
+      }
+    );
+
+    // Get unique projects for this contact with their types
+    const clientProjectMap = {};
+
+    productsResponse.data.records.forEach((record) => {
+      const requestingCompanyIds = record.fields['Requesting Company'] || [];
+      const isContactMatch = requestingCompanyIds.includes(contactId);
+
+      if (isContactMatch) {
+        const projectIds = record.fields['Project'] || [];
+        projectIds.forEach(projectId => {
+          if (!clientProjectMap[projectId]) {
+            clientProjectMap[projectId] = {
+              name: projectMap[projectId]?.name || projectId,
+              projectType: projectMap[projectId]?.type || 'Comparison'
+            };
+          }
+        });
+      }
+    });
+
+    // Convert to array
+    const projects = Object.values(clientProjectMap).sort((a, b) => a.name.localeCompare(b.name));
+
+    res.json(projects);
+
+  } catch (error) {
+    console.error('Error fetching client projects with types:', error.message);
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
 // Admin: Get all client-project mappings
 app.get('/api/admin/all-projects', async (req, res) => {
   try {

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construction Collection - Client Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f8f7f5 0%, #f0ede9 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      max-width: 500px;
+      width: 100%;
+      padding: 60px 40px;
+      text-align: center;
+    }
+
+    .logo-box {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 40px;
+      display: inline-block;
+    }
+
+    .logo-box img {
+      height: 60px;
+      display: block;
+    }
+
+    h1 {
+      color: #1a1a1a;
+      font-size: 28px;
+      font-weight: 300;
+      margin-bottom: 15px;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      color: #333;
+      font-weight: 500;
+      margin-bottom: 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="email"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #2d7a7a;
+      box-shadow: 0 0 0 3px rgba(45, 122, 122, 0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px 20px;
+      background: #2d7a7a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #245f5f;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(45, 122, 122, 0.2);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error {
+      color: #d9534f;
+      font-size: 14px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2d7a7a;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .projects-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .projects-modal.show {
+      display: flex;
+    }
+
+    .projects-content {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .projects-content h2 {
+      color: #1a1a1a;
+      margin-bottom: 25px;
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    .project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .project-item {
+      padding: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    .project-item:hover {
+      border-color: #2d7a7a;
+      background: #f0fafb;
+      transform: translateX(4px);
+    }
+
+    .project-name {
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .project-type {
+      font-size: 13px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .project-type-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+
+    .project-type-badge.comparison {
+      background: #e8f5f5;
+      color: #2d7a7a;
+    }
+
+    .project-type-badge.sourcing {
+      background: #f5f0e8;
+      color: #8b6f47;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo-box">
+      <img src="cc-logo.png" alt="Construction Collection">
+    </div>
+    <h1>Construction Collection</h1>
+    <p class="subtitle">Client Dashboard</p>
+
+    <div id="loginForm">
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="email">Your Email Address</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            required
+            autocomplete="email"
+          >
+        </div>
+        <button type="submit">Access Dashboard</button>
+        <div class="error" id="error"></div>
+      </form>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; color: #666;">Validating email...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="projects-modal" id="projectsModal">
+    <div class="projects-content">
+      <h2>Select Your Project</h2>
+      <div class="project-list" id="projectList"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin === 'http://localhost:3000'
+      ? 'http://localhost:3000/api'
+      : 'https://client-dashboard-ugki.onrender.com/api';
+
+    async function handleLogin(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const errorDiv = document.getElementById('error');
+      const loading = document.getElementById('loading');
+      const form = event.target;
+
+      errorDiv.style.display = 'none';
+      errorDiv.textContent = '';
+      form.style.display = 'none';
+      loading.style.display = 'block';
+
+      try {
+        // Authenticate email
+        const authResponse = await fetch(`${API_URL}/authenticate?email=${encodeURIComponent(email)}`);
+
+        if (!authResponse.ok) {
+          throw new Error('Email not found in our system');
+        }
+
+        const contactData = await authResponse.json();
+
+        // Fetch projects with types
+        const projectsResponse = await fetch(`${API_URL}/client-projects-with-types?email=${encodeURIComponent(email)}`);
+
+        if (!projectsResponse.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+
+        const projects = await projectsResponse.json();
+
+        if (projects.length === 0) {
+          throw new Error('No projects found for your account');
+        }
+
+        // If only one project, redirect directly
+        if (projects.length === 1) {
+          redirectToDashboard(projects[0], email);
+          return;
+        }
+
+        // Show project selection modal
+        showProjectSelector(projects, email);
+
+      } catch (error) {
+        console.error('Error:', error);
+        errorDiv.textContent = error.message || 'An error occurred. Please try again.';
+        errorDiv.style.display = 'block';
+        form.style.display = 'block';
+        loading.style.display = 'none';
+      }
+    }
+
+    function showProjectSelector(projects, email) {
+      const projectList = document.getElementById('projectList');
+      projectList.innerHTML = '';
+
+      projects.forEach(project => {
+        const item = document.createElement('div');
+        item.className = 'project-item';
+        item.onclick = () => redirectToDashboard(project, email);
+
+        const typeBadge = project.projectType?.toLowerCase() || 'unknown';
+        const typeLabel = project.projectType === 'Comparison' ? 'Comparison' : 'Sourcing';
+
+        item.innerHTML = `
+          <div class="project-name">
+            ${project.name}
+            <span class="project-type-badge ${typeBadge}">${typeLabel}</span>
+          </div>
+          <div class="project-type">Click to open dashboard</div>
+        `;
+
+        projectList.appendChild(item);
+      });
+
+      document.getElementById('projectsModal').classList.add('show');
+    }
+
+    function redirectToDashboard(project, email) {
+      const dashboard = project.projectType?.toLowerCase() === 'sourcing'
+        ? 'dashboard2.html'
+        : 'dashboard.html';
+
+      const url = `${dashboard}?email=${encodeURIComponent(email)}&project=${encodeURIComponent(project.name)}`;
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
