@@ -98,28 +98,16 @@
 
     .project-selector select:hover,
     .project-selector select:focus {
-      outline: none;
       border-color: #2d7a7a;
       box-shadow: 0 0 0 3px rgba(45, 122, 122, 0.1);
     }
 
-    .dashboard {
-      display: flex;
-      flex-direction: column;
-      gap: 50px;
-      margin-bottom: 50px;
-    }
-
-    .product-card {
+    .card {
       background: white;
       border-radius: 12px;
       padding: 40px;
+      margin-bottom: 40px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
-    }
-
-    .product-card:hover {
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
 
     .card-header {
@@ -135,107 +123,95 @@
       letter-spacing: -0.3px;
     }
 
-    .product-item {
-      border: 1px solid #e8e8e8;
+    .option-count-badge {
+      background: #2d7a7a;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .option-item {
+      border: 2px solid #e0e0e0;
       border-radius: 10px;
-      padding: 25px;
-      margin-bottom: 25px;
+      padding: 30px;
+      background: #fafaf9;
       transition: all 0.3s ease;
     }
 
-    .product-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .product-item.sourced {
+    .option-item:hover {
       border-color: #2d7a7a;
       background: #f0fafb;
     }
 
-    .product-header {
+    .option-item.selected {
+      background: #f0fafb;
+    }
+
+    .option-item.selected .option-header {
+      color: #2d7a7a;
+    }
+
+    .option-header {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
+      justify-content: flex-end;
       margin-bottom: 20px;
     }
 
     .product-name {
-      font-size: 18px;
       font-weight: 600;
       color: #333;
+      flex: 1;
     }
 
-    .status-badge {
-      padding: 6px 12px;
+    .select-btn {
+      padding: 10px 20px;
+      background: #2d7a7a;
+      color: white;
+      border: none;
       border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .status-badge.pending {
-      background: #fff3cd;
-      color: #856404;
-    }
-
-    .status-badge.sourced {
-      background: #d4edda;
-      color: #155724;
-    }
-
-    .product-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-bottom: 25px;
-    }
-
-    .product-image-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .product-image-main {
-      background: #fafaf9;
-      border-radius: 10px;
-      overflow: hidden;
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
-      transition: box-shadow 0.3s ease;
+      font-weight: 500;
+      transition: all 0.2s;
+      font-size: 14px;
     }
 
-    .product-image-main:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    .select-btn:hover {
+      background: #246565;
+      box-shadow: 0 4px 12px rgba(45, 122, 122, 0.3);
     }
 
-    .product-image-main img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+    .select-btn.selected {
+      background: #2d7a7a;
     }
 
     .product-thumbnails {
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 4px 0;
+      gap: 10px;
+      margin-top: 12px;
+      justify-content: center;
     }
 
     .product-thumbnail {
       width: 60px;
       height: 60px;
-      background: #fafaf9;
-      border-radius: 8px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
       overflow: hidden;
       cursor: pointer;
-      border: 2px solid #e0e0e0;
       transition: all 0.2s ease;
-      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafaf9;
     }
 
     .product-thumbnail img {
@@ -251,589 +227,510 @@
 
     .product-thumbnail.active {
       border-color: #2d7a7a;
-      box-shadow: 0 4px 12px rgba(45, 122, 122, 0.3);
+      box-shadow: 0 0 0 2px rgba(45, 122, 122, 0.3);
+    }
+
+    .images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin: 30px 0;
+    }
+
+    .image-box {
+      background: #fafaf9;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .image-label {
+      font-size: 13px;
+      color: #888;
+      text-align: center;
+      font-weight: 400;
+      display: block !important;
+    }
+
+    .images > div > .image-label:first-child {
+      margin-bottom: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
+    .images > div > .image-label:last-child {
+      margin-top: 12px;
+    }
+
+    .product-thumbnails {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+
+    .product-thumbnail {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .product-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .product-thumbnail.active {
+      border-color: #2d7a7a;
+      box-shadow: 0 0 0 2px rgba(45, 122, 122, 0.3);
+    }
+
+    .product-thumbnail:hover {
+      border-color: #2d7a7a;
+    }
+
+    .option-item-content {
+      display: flex;
+      flex-direction: column;
     }
 
     .product-info {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
     }
 
     .info-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
     }
 
     .info-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #666;
+      font-size: 12px;
+      color: #888;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      letter-spacing: 0.5px;
     }
 
     .info-value {
       font-size: 15px;
-      color: #333;
+      color: #1a1a1a;
+      font-weight: 400;
     }
 
     .pricing-section {
-      background: #f9fafb;
-      border-left: 3px solid #2d7a7a;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
     }
 
     .price-row {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
-      font-size: 14px;
-      color: #333;
-    }
-
-    .price-row strong {
-      font-weight: 600;
-    }
-
-    .budget-tracker {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-      margin-bottom: 50px;
-    }
-
-    .budget-header {
-      font-size: 20px;
-      font-weight: 400;
-      color: #1a1a1a;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    .budget-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 16px 0;
-      font-size: 16px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .budget-row:last-child {
-      border-bottom: none;
-    }
-
-    .budget-label {
-      color: #666;
-    }
-
-    .budget-value {
-      font-weight: 600;
-      color: #1a1a1a;
-    }
-
-    .budget-total {
-      display: flex;
-      justify-content: space-between;
-      padding: 20px 0;
-      margin-top: 20px;
-      border-top: 2px solid #2d7a7a;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .budget-status {
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      font-weight: 600;
-      text-align: center;
-    }
-
-    .budget-status.on-track {
-      background: #d4edda;
-      color: #155724;
-    }
-
-    .budget-status.warning {
-      background: #fff3cd;
-      color: #856404;
-    }
-
-    .budget-status.over {
-      background: #f8d7da;
-      color: #721c24;
-    }
-
-    .summary {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    }
-
-    .summary h2 {
-      font-size: 28px;
-      margin-bottom: 30px;
-      color: #1a1a1a;
-      font-weight: 400;
-      letter-spacing: -0.3px;
-    }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 16px 0;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 12px 0;
       font-size: 15px;
     }
 
-    .summary-row:last-child {
-      border-bottom: none;
-    }
-
-    .summary-label {
+    .price-row span:first-child {
       color: #666;
     }
 
-    .summary-value {
-      font-weight: 600;
+    .price-row span:last-child {
       color: #1a1a1a;
+      font-weight: 500;
     }
 
-    .main-wrapper {
-      display: flex;
-      gap: 30px;
+    .cost-selection {
       margin-top: 30px;
+      padding: 20px;
+      background: #f8f7f5;
+      border-radius: 8px;
     }
 
-    .sidebar {
-      position: sticky;
-      top: 20px;
-      width: 260px;
-      height: fit-content;
-      background: white;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-      flex-shrink: 0;
-    }
-
-    .sidebar-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #666;
+    .cost-selection-label {
+      font-size: 12px;
+      color: #888;
       text-transform: uppercase;
+      font-weight: 600;
       margin-bottom: 15px;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.5px;
     }
 
-    .sidebar-list {
-      list-style: none;
-      max-height: calc(100vh - 250px);
-      overflow-y: auto;
-    }
-
-    .sidebar-list li {
-      margin-bottom: 6px;
-    }
-
-    .sidebar-list button {
-      width: 100%;
-      padding: 11px 12px;
-      background: #f5f5f5;
-      border: none;
-      border-radius: 6px;
+    .cost-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
       cursor: pointer;
-      text-align: left;
+    }
+
+    .cost-option input[type="radio"] {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    .cost-option label {
+      cursor: pointer;
+      flex: 1;
+      margin: 0;
+    }
+
+    .my-notes {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .my-notes-label {
+      font-size: 12px;
+      color: #888;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .my-notes-content {
+      font-size: 15px;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+
+    .products-sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 200px;
+      height: 100vh;
+      background: #f8f7f5;
+      padding: 40px 20px;
+      overflow-y: auto;
+      border-right: 1px solid #e0e0e0;
+      z-index: 100;
+    }
+
+    .products-sidebar-header {
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+    }
+
+    .products-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .product-link {
+      padding: 10px 12px;
+      color: #666;
       font-size: 13px;
-      color: #333;
-      transition: all 0.2s;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
       border-left: 3px solid transparent;
     }
 
-    .sidebar-list button:hover {
-      background: #eef5f5;
-      border-left-color: #2d7a7a;
-    }
-
-    .sidebar-list button.active {
-      background: #eef5f5;
-      border-left-color: #2d7a7a;
-      font-weight: 600;
+    .product-link:hover {
+      background: #efefef;
       color: #2d7a7a;
+      border-left-color: #2d7a7a;
     }
 
-    .content-wrapper {
+    .product-link.active {
+      background: #e8f5f5;
+      color: #2d7a7a;
+      border-left-color: #2d7a7a;
+      font-weight: 500;
+    }
+
+    .container {
+      margin-left: 200px;
+    }
+
+    .summary-section {
+      margin-top: 50px;
+    }
+
+    .summary-header {
+      font-size: 24px;
+      font-weight: 400;
+      color: #1a1a1a;
+      margin-bottom: 30px;
+      letter-spacing: -0.3px;
+    }
+
+    .summary-items {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: #f8f7f5;
+      border-radius: 8px;
+      border-left: 4px solid #2d7a7a;
+    }
+
+    .summary-item-name {
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+
+    .summary-item-price {
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 40px;
+    }
+
+    .btn {
       flex: 1;
+      padding: 16px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: #2d7a7a;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #245f5f;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(45, 122, 122, 0.2);
     }
 
     .loading {
       text-align: center;
-      color: #666;
-      font-size: 16px;
+      padding: 40px;
+      color: #888;
     }
 
     .error {
-      background: white;
-      color: #d9534f;
+      background: #f8d7da;
+      color: #721c24;
       padding: 20px;
       border-radius: 8px;
-      margin: 20px 0;
-      border-left: 3px solid #d9534f;
-    }
-
-    .submit-button {
-      background: #2d7a7a;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      width: 100%;
-      transition: all 0.2s;
-      margin-top: 30px;
-    }
-
-    .submit-button:hover {
-      background: #246565;
-    }
-
-    .card-header-title {
-      font-size: 20px;
-      font-weight: 500;
-      color: #1a1a1a;
-    }
-
-    .option-count-badge {
-      background: #f0fafb;
-      color: #2d7a7a;
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      border: 1px solid #e0e0e0;
-    }
-
-    .options-container {
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .option-item {
-      padding: 20px;
-      border-bottom: 1px solid #e0e0e0;
-      transition: all 0.2s ease;
-    }
-
-    .option-item:last-child {
-      border-bottom: none;
-    }
-
-    .option-item.selected {
-      background: #f0fafb;
-      border-left: 4px solid #2d7a7a;
-      padding-left: 16px;
-    }
-
-    .option-header {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
       margin-bottom: 20px;
     }
 
-    .select-btn {
-      background: #2d7a7a;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .select-btn:hover {
-      background: #246565;
-      box-shadow: 0 4px 12px rgba(45, 122, 122, 0.3);
-    }
-
-    .select-btn.selected {
-      background: #2d7a7a;
-    }
-
-    .image-label {
-      font-size: 12px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
     @media (max-width: 768px) {
-      .product-details {
-        grid-template-columns: 1fr;
+      .header {
+        padding: 25px;
       }
 
       h1 {
         font-size: 28px;
       }
 
-      .header-content {
+      .card {
+        padding: 25px;
+      }
+
+      .images {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .image-box {
+        height: 250px;
+      }
+
+      .product-info {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons {
         flex-direction: column;
-        align-items: flex-start;
       }
     }
   </style>
 </head>
 <body>
+  <div class="products-sidebar" id="productsSidebar">
+    <div class="products-sidebar-header">Products</div>
+    <div class="products-list" id="productsList"></div>
+  </div>
+
   <div class="container">
-    <div class="header" id="header" style="display: none;">
+    <div class="header">
       <div class="header-content">
         <div class="header-logo">
-          <img src="/cc-logo.png" alt="Construction Collection" onerror="this.style.display='none'">
+          <img src="/cc-logo.png" alt="Construction Collection">
         </div>
         <div class="header-title">
           <div class="company-name">Construction Collection</div>
-          <h1 id="pageTitle">Product Sourcing Dashboard</h1>
-        </div>
-      </div>
-      <div class="project-selector">
-        <label for="projectSelect">Select Project:</label>
-        <select id="projectSelect" onchange="changeProject()">
-          <option value="">-- Choose a project --</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="loading" class="loading">Loading projects...</div>
-    <div id="error" class="error" style="display: none;"></div>
-
-    <div class="main-wrapper" id="mainWrapper" style="display: none;">
-      <div class="sidebar">
-        <div class="sidebar-title">Products</div>
-        <ul class="sidebar-list" id="sidebarList"></ul>
-      </div>
-      <div class="content-wrapper">
-        <div class="dashboard" id="dashboard"></div>
-        <div class="summary" id="summary" style="display: none;">
-          <h2>Project Summary</h2>
-          <div id="summaryContent"></div>
-          <button class="submit-button" onclick="downloadAndSubmit()">📥 Download & Submit Sourcing Report</button>
+          <h1>Product Sourcing</h1>
         </div>
       </div>
     </div>
+
+    <div id="dashboardContent"></div>
   </div>
 
   <script>
     const API_URL = window.location.origin === 'http://localhost:3000'
       ? 'http://localhost:3000/api'
       : 'https://client-dashboard-ugki.onrender.com/api';
-    let allProducts = [];
-    let selectedProducts = {}; // Track multiple selections for samples
-    let selectedForCost = {}; // Track which option is used for cost calculation (one per group)
-    let currentProject = null;
-    let projectBudget = 0;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlProject = urlParams.get('project');
+    let currentEmail = '';
+    let currentProject = '';
+    let groupedProducts = {};
+    let selectedProducts = {};
+    let costSelection = {};
 
-    async function fetchProjects() {
-      try {
-        // Check if email is in URL - required for authentication
-        const email = new URLSearchParams(window.location.search).get('email');
-
-        if (!email) {
-          // No email - cannot proceed without authentication
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('error').style.display = 'block';
-          document.getElementById('error').textContent = 'Please login with your email first.';
-          return;
-        }
-
-        if (urlProject) {
-          fetchProductsForProject(urlProject);
-          return;
-        }
-
-        // Fetch ONLY this client's projects (filtered by email)
-        const response = await fetch(`${API_URL}/client-projects?email=${encodeURIComponent(email)}`);
-        if (!response.ok) throw new Error('Failed to fetch projects');
-
-        const projects = await response.json();
-        populateProjectDropdown(projects);
-
-        document.getElementById('header').style.display = 'block';
-        document.getElementById('loading').style.display = 'none';
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Error loading projects: ' + error.message;
+    function getImageUrl(images) {
+      if (!images) return null;
+      if (Array.isArray(images)) {
+        return images[0]?.url || null;
       }
-    }
-
-    function populateProjectDropdown(projects) {
-      const select = document.getElementById('projectSelect');
-      projects.forEach(project => {
-        const option = document.createElement('option');
-        const projectName = typeof project === 'string' ? project : project.name;
-        option.value = projectName;
-        option.textContent = projectName;
-        select.appendChild(option);
-      });
-    }
-
-    function changeProject() {
-      const projectSelect = document.getElementById('projectSelect');
-      const selectedProject = projectSelect.value;
-      if (selectedProject) {
-        fetchProductsForProject(selectedProject);
-        window.history.pushState({}, '', `?project=${encodeURIComponent(selectedProject)}`);
-      }
-    }
-
-    async function fetchProductsForProject(projectName) {
-      try {
-        currentProject = projectName;
-        selectedProducts = {}; // Reset selections
-        selectedForCost = {}; // Reset cost selections
-
-        const response = await fetch(`${API_URL}/products?project=${encodeURIComponent(projectName)}`);
-        if (!response.ok) throw new Error('Failed to fetch products');
-
-        allProducts = await response.json();
-
-        if (urlProject) {
-          const header = document.getElementById('header');
-          document.getElementById('pageTitle').textContent = projectName;
-          header.style.display = 'block';
-        }
-
-        renderDashboard();
-        document.getElementById('loading').style.display = 'none';
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Error loading products: ' + error.message;
-      }
+      return images.url || null;
     }
 
     function getFieldValue(record, fieldName) {
       if (!record.fields) return null;
-      return record.fields[fieldName];
+      return record.fields[fieldName] || null;
     }
 
-    function getImageUrl(imageArray) {
-      if (Array.isArray(imageArray) && imageArray.length > 0) {
-        return imageArray[0].url;
+    function switchCompetitorImage(index, imageIdx) {
+      const options = Object.values(groupedProducts).flat();
+      const option = options.find(o => options.indexOf(o) === index);
+      if (!option) return;
+
+      const competitorImages = getFieldValue(option.product, 'Competitor Product Images');
+      if (!competitorImages || !Array.isArray(competitorImages)) return;
+
+      const mainImg = document.getElementById(`competitorImg-${index}`);
+      if (mainImg) {
+        mainImg.src = competitorImages[imageIdx].url;
       }
-      return null;
+
+      const thumbnails = document.querySelectorAll(`#competitorThumbnails-${index} .product-thumbnail`);
+      thumbnails.forEach((thumb, idx) => {
+        thumb.classList.toggle('active', idx === imageIdx);
+      });
     }
 
-    function toggleProduct(index, groupName) {
-      // Initialize as array if not exists
-      if (!selectedProducts[groupName]) {
-        selectedProducts[groupName] = [];
+    function switchMyImage(index, imageIdx) {
+      const options = Object.values(groupedProducts).flat();
+      const option = options.find(o => options.indexOf(o) === index);
+      if (!option) return;
+
+      const myImages = getFieldValue(option.product, 'My Product Photos');
+      if (!myImages || !Array.isArray(myImages)) return;
+
+      const mainImg = document.getElementById(`myImg-${index}`);
+      if (mainImg) {
+        mainImg.src = myImages[imageIdx].url;
       }
 
-      const selectedArray = selectedProducts[groupName];
-      const indexPosition = selectedArray.indexOf(index);
-
-      if (indexPosition > -1) {
-        // Already selected - remove it
-        selectedArray.splice(indexPosition, 1);
-      } else {
-        // Not selected - add it
-        selectedArray.push(index);
-      }
-
-      // Clean up empty arrays
-      if (selectedArray.length === 0) {
-        delete selectedProducts[groupName];
-      }
-
-      renderDashboard();
-      updateSummary();
+      const thumbnails = document.querySelectorAll(`#myThumbnails-${index} .product-thumbnail`);
+      thumbnails.forEach((thumb, idx) => {
+        thumb.classList.toggle('active', idx === imageIdx);
+      });
     }
 
-    function setOptionForCost(groupName, index) {
-      selectedForCost[groupName] = index;
-      updateSummary();
-    }
+    async function loadDashboard() {
+      const params = new URLSearchParams(window.location.search);
+      currentEmail = params.get('email');
+      currentProject = params.get('project');
 
-    function switchImage(productIndex, imageIndex) {
-      const mainImg = document.getElementById(`mainImg-${productIndex}`);
-      const thumbnails = document.querySelectorAll(`#thumbnails-${productIndex} .product-thumbnail`);
+      if (!currentEmail || !currentProject) {
+        document.getElementById('dashboardContent').innerHTML = '<div class="error">Missing email or project parameters</div>';
+        return;
+      }
 
-      if (mainImg && allProducts[productIndex]) {
-        const images = getFieldValue(allProducts[productIndex], 'My Product Photos');
-        if (images && images[imageIndex]) {
-          mainImg.src = images[imageIndex].url;
+      try {
+        document.getElementById('dashboardContent').innerHTML = '<div class="loading">Loading dashboard...</div>';
 
-          // Update active thumbnail
-          thumbnails.forEach((thumb, idx) => {
-            thumb.classList.toggle('active', idx === imageIndex);
-          });
-        }
+        const response = await fetch(`${API_URL}/products?email=${encodeURIComponent(currentEmail)}&project=${encodeURIComponent(currentProject)}`);
+        if (!response.ok) throw new Error('Failed to load products');
+
+        const products = await response.json();
+        groupedProducts = {};
+
+        products.forEach(product => {
+          const groupName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+          if (!groupedProducts[groupName]) {
+            groupedProducts[groupName] = [];
+          }
+          groupedProducts[groupName].push({ product, index: products.indexOf(product) });
+        });
+
+        renderDashboard();
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('dashboardContent').innerHTML = `<div class="error">Error loading dashboard: ${error.message}</div>`;
       }
     }
 
     function renderDashboard() {
-      const dashboard = document.getElementById('dashboard');
-      dashboard.innerHTML = '';
+      let html = `<div class="card">
+        <div class="card-header">
+          <span>${currentProject}</span>
+        </div>`;
 
-      if (allProducts.length === 0) {
-        dashboard.innerHTML = '<div style="color: #666; text-align: center; padding: 40px;">No products found for this project.</div>';
-        dashboard.style.display = 'flex';
-        return;
-      }
+      let productSidebarHtml = '';
 
-      const groupedProducts = {};
-      allProducts.forEach((product, index) => {
-        const groupName = product.fields['Competitor_Product_Name_Text'] || 'Unknown Group';
-        if (!groupedProducts[groupName]) {
-          groupedProducts[groupName] = [];
-        }
-        groupedProducts[groupName].push({ product, index });
-      });
-
-      const sortedGroupNames = Object.keys(groupedProducts).sort();
-
-      sortedGroupNames.forEach(groupName => {
-        const options = groupedProducts[groupName];
-        const card = document.createElement('div');
-        card.className = 'product-card';
-
-        const optionCount = options.length;
+      Object.entries(groupedProducts).forEach(([groupName, options]) => {
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
-        let optionsHtml = `
+
+        html += `
           <div class="card-header">
-            <div class="card-header-title">${groupName}</div>
-            <div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>
+            <span>${groupName}</span>
+            <span class="option-count-badge">Select from ${options.length}</span>
           </div>
-          <div class="options-container">
-        `;
+          <div class="options-container" id="options-${groupName}">`;
 
         options.forEach(({ product, index }) => {
           const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
+          productSidebarHtml += `<div class="product-link" data-product-index="${index}" onclick="scrollToProduct(${index})">${productName}</div>`;
+
           const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
           const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
           const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
           const room = getFieldValue(product, 'Room (from Competitor\'s Products)') || '';
           const mySize = getFieldValue(product, 'Size') || '';
           const myImages = getFieldValue(product, 'My Product Photos');
+          const competitorImages = getFieldValue(product, 'Competitor Product Images');
           const myNotes = getFieldValue(product, 'My Notes') || '';
 
           const totalPrice = price * quantity;
@@ -841,404 +738,214 @@
           const isSelected = selectedProducts[groupName] && selectedProducts[groupName].includes(index);
           const optionClass = isSelected ? 'option-item selected' : 'option-item';
 
-          optionsHtml += `
+          html += `
             <div class="${optionClass}" id="product-${index}">
               <div class="option-header">
                 <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
                   ${isSelected ? '✓ Selected' : 'Select'}
                 </button>
               </div>
-              <div class="product-header">
-                <div class="product-name">${productName}</div>
-              </div>
 
-              <div class="product-details">
-                <div class="product-image-container">
-                  <div class="product-image-main" id="mainImage-${index}">
-                    ${myImages ? `<img src="${getImageUrl(myImages)}" alt="Product" id="mainImg-${index}">` : '<div style="color: #ccc;">No Image</div>'}
-                  </div>
-                  ${myImages && myImages.length > 1 ? `
-                    <div class="product-thumbnails" id="thumbnails-${index}">
-                      ${myImages.map((img, imgIdx) => `
-                        <div class="product-thumbnail ${imgIdx === 0 ? 'active' : ''}" onclick="switchImage(${index}, ${imgIdx})" title="Image ${imgIdx + 1}">
-                          <img src="${img.url}" alt="Image ${imgIdx + 1}">
-                        </div>
-                      `).join('')}
+              <div class="option-item-content">
+                <div class="images">
+                  <div>
+                    <div class="image-label">${groupName}</div>
+                    <div class="image-box" id="competitorImage-${index}">
+                      ${competitorImages ? `<img src="${getImageUrl(competitorImages)}" alt="Inspiration" id="competitorImg-${index}">` : '<div style="color: #ccc;">No Image</div>'}
                     </div>
-                  ` : ''}
+                    ${competitorImages && Array.isArray(competitorImages) && competitorImages.length > 1 ? `
+                      <div class="product-thumbnails" id="competitorThumbnails-${index}">
+                        ${competitorImages.map((img, imgIdx) => `
+                          <div class="product-thumbnail ${imgIdx === 0 ? 'active' : ''}" onclick="switchCompetitorImage(${index}, ${imgIdx})" title="Image ${imgIdx + 1}">
+                            <img src="${img.url}" alt="Image ${imgIdx + 1}">
+                          </div>
+                        `).join('')}
+                      </div>
+                    ` : ''}
+                    <div class="image-label">Inspiration Image</div>
+                  </div>
+                  <div>
+                    <div class="image-label">${productName}</div>
+                    <div class="image-box" id="myImage-${index}">
+                      ${myImages ? `<img src="${getImageUrl(myImages)}" alt="My Product" id="myImg-${index}">` : '<div style="color: #ccc;">No Image</div>'}
+                    </div>
+                    ${myImages && Array.isArray(myImages) && myImages.length > 1 ? `
+                      <div class="product-thumbnails" id="myThumbnails-${index}">
+                        ${myImages.map((img, imgIdx) => `
+                          <div class="product-thumbnail ${imgIdx === 0 ? 'active' : ''}" onclick="switchMyImage(${index}, ${imgIdx})" title="Image ${imgIdx + 1}">
+                            <img src="${img.url}" alt="Image ${imgIdx + 1}">
+                          </div>
+                        `).join('')}
+                      </div>
+                    ` : ''}
+                    <div class="image-label">My Product</div>
+                  </div>
                 </div>
-                <div class="image-label">Inspiration Image</div>
+
                 <div class="product-info">
                   ${room ? `<div class="info-row"><div class="info-label">Area/Room</div><div class="info-value">${room}</div></div>` : ''}
                   ${mySize ? `<div class="info-row"><div class="info-label">Specified Size</div><div class="info-value">${mySize}</div></div>` : ''}
                   <div class="info-row"><div class="info-label">Quantity</div><div class="info-value">${quantity}</div></div>
-                  ${myNotes ? `<div class="info-row"><div class="info-label">Notes</div><div class="info-value">${myNotes}</div></div>` : ''}
                 </div>
-              </div>
 
-              <div class="pricing-section">
-                <div class="price-row">
-                  <span>Your Price per Unit:</span>
-                  <span>$${price.toFixed(2)}</span>
+                <div class="pricing-section">
+                  <div class="price-row">
+                    <span>Your Price per Unit:</span>
+                    <span>$${price.toFixed(2)}</span>
+                  </div>
+                  <div class="price-row">
+                    <span>Budgeted Price per Unit:</span>
+                    <span>$${budgetPrice.toFixed(2)}</span>
+                  </div>
+                  <div class="price-row" style="border-top: 1px solid #e0e0e0; padding-top: 8px; margin-top: 8px;">
+                    <span><strong>Your Total Price:</strong></span>
+                    <span><strong>$${totalPrice.toFixed(2)}</strong></span>
+                  </div>
+                  <div class="price-row">
+                    <span><strong>Budgeted Total Price:</strong></span>
+                    <span><strong>$${budgetTotal.toFixed(2)}</strong></span>
+                  </div>
                 </div>
-                <div class="price-row">
-                  <span>Budgeted Price per Unit:</span>
-                  <span>$${budgetPrice.toFixed(2)}</span>
-                </div>
-                <div class="price-row" style="border-top: 1px solid #e0e0e0; padding-top: 8px; margin-top: 8px;">
-                  <span><strong>Your Total Price:</strong></span>
-                  <span><strong>$${totalPrice.toFixed(2)}</strong></span>
-                </div>
-                <div class="price-row">
-                  <span><strong>Budgeted Total Price:</strong></span>
-                  <span><strong>$${budgetTotal.toFixed(2)}</strong></span>
-                </div>
+
+                ${myNotes ? `
+                  <div class="my-notes">
+                    <div class="my-notes-label">My Notes</div>
+                    <div class="my-notes-content">${myNotes}</div>
+                  </div>
+                ` : ''}
               </div>
-            </div>
-          `;
+            </div>`;
         });
 
-        card.innerHTML = optionsHtml;
-        dashboard.appendChild(card);
+        html += `</div>`;
       });
 
-      populateSidebar(sortedGroupNames);
-      updateSummary();
+      html += `
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="downloadAndSubmit()">Generate PDF & Submit</button>
+        </div>
+      </div>`;
 
-      document.getElementById('mainWrapper').style.display = 'flex';
-      document.getElementById('dashboard').style.display = 'flex';
+      document.getElementById('dashboardContent').innerHTML = html;
+      document.getElementById('productsList').innerHTML = productSidebarHtml;
     }
 
-    function populateSidebar(productNames) {
-      const sidebarList = document.getElementById('sidebarList');
-      sidebarList.innerHTML = '';
-
-      productNames.forEach(name => {
-        const li = document.createElement('li');
-        const button = document.createElement('button');
-        button.textContent = name || 'Unknown Product';
-        button.onclick = () => scrollToProduct(name);
-        button.className = 'sidebar-item active';
-        button.setAttribute('data-product', name);
-        li.appendChild(button);
-        sidebarList.appendChild(li);
-      });
-    }
-
-    function scrollToProduct(productName) {
+    function scrollToProduct(index) {
       setTimeout(() => {
-        const productCards = document.querySelectorAll('.product-card');
-        for (let card of productCards) {
-          const header = card.querySelector('.card-header');
-          if (header && header.textContent.trim() === productName) {
-            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            break;
-          }
+        const productElement = document.getElementById(`product-${index}`);
+        if (productElement) {
+          productElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          // Update active state in sidebar
+          document.querySelectorAll('.product-link').forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('data-product-index') == index) {
+              link.classList.add('active');
+            }
+          });
         }
       }, 100);
     }
 
-    function updateBudgetTracker() {
-      const budgetTracker = document.getElementById('budgetTracker');
-      const budgetContent = document.getElementById('budgetContent');
-
-      let totalBudget = 0;
-      let totalCost = 0;
-      let budgetItems = [];
-      let costSelectionItems = {};
-
-      // Collect all samples and cost selections
-      Object.keys(selectedProducts).forEach(groupName => {
-        const selectedIndices = selectedProducts[groupName];
-        costSelectionItems[groupName] = selectedIndices;
-      });
-
-      // Calculate totals based on selectedForCost (one option per group)
-      Object.keys(costSelectionItems).forEach(groupName => {
-        const costIndex = selectedForCost[groupName];
-        const indexToUse = costIndex !== undefined ? costIndex : costSelectionItems[groupName][0];
-
-        const product = allProducts[indexToUse];
-        const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
-        const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
-        const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
-        const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
-
-        const productCost = price * quantity;
-        const productBudget = budgetPrice * quantity;
-        const difference = productBudget - productCost;
-
-        totalBudget += productBudget;
-        totalCost += productCost;
-
-        budgetItems.push({
-          name: productName,
-          budget: productBudget,
-          cost: productCost,
-          difference: difference,
-          status: difference >= 0 ? 'under' : 'over'
-        });
-      });
-
-      projectBudget = totalBudget;
-
-      let html = '';
-
-      // Per-product breakdown
-      budgetItems.forEach(item => {
-        const statusColor = item.status === 'under' ? '#2d7a7a' : '#d9534f';
-        html += `
-          <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0;">
-            <div class="budget-row">
-              <span class="budget-label">${item.name}</span>
-            </div>
-            <div class="budget-row" style="padding-left: 20px; font-size: 14px;">
-              <span>Budget:</span>
-              <span style="font-weight: 600;">$${item.budget.toFixed(2)}</span>
-            </div>
-            <div class="budget-row" style="padding-left: 20px; font-size: 14px;">
-              <span>Sourced Cost:</span>
-              <span style="font-weight: 600;">$${item.cost.toFixed(2)}</span>
-            </div>
-            <div class="budget-row" style="padding-left: 20px; font-size: 14px;">
-              <span>Difference:</span>
-              <span style="font-weight: 600; color: ${statusColor};">${item.status === 'under' ? '+' : ''}$${item.difference.toFixed(2)}</span>
-            </div>
-          </div>
-        `;
-      });
-
-      // Totals
-      const remaining = totalBudget - totalCost;
-      const percentUsed = totalBudget > 0 ? (totalCost / totalBudget * 100).toFixed(0) : 0;
-
-      let statusClass = 'on-track';
-      let statusText = '✓ On Budget';
-      if (remaining < 0) {
-        statusClass = 'over';
-        statusText = '✗ Over Budget';
-      } else if (percentUsed > 85) {
-        statusClass = 'warning';
-        statusText = '⚠ Warning: Approaching Budget Limit';
+    function toggleProduct(index, groupName) {
+      if (!selectedProducts[groupName]) {
+        selectedProducts[groupName] = [];
       }
 
-      html += `
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #2d7a7a;">
-          <div class="budget-row">
-            <span class="budget-label"><strong>Total Budget:</strong></span>
-            <span class="budget-value"><strong>$${totalBudget.toFixed(2)}</strong></span>
-          </div>
-          <div class="budget-row">
-            <span class="budget-label"><strong>Total Sourced Cost:</strong></span>
-            <span class="budget-value"><strong>$${totalCost.toFixed(2)}</strong></span>
-          </div>
-          <div class="budget-row">
-            <span class="budget-label"><strong>Total Remaining:</strong></span>
-            <span class="budget-value" style="color: ${remaining < 0 ? '#d9534f' : '#2d7a7a'};"><strong>$${remaining.toFixed(2)}</strong></span>
-          </div>
-          <div class="budget-row">
-            <span class="budget-label"><strong>Budget Used:</strong></span>
-            <span class="budget-value"><strong>${percentUsed}%</strong></span>
-          </div>
-        </div>
-        <div class="budget-status ${statusClass}">${statusText}</div>
-      `;
+      const position = selectedProducts[groupName].indexOf(index);
+      if (position > -1) {
+        selectedProducts[groupName].splice(position, 1);
+      } else {
+        selectedProducts[groupName].push(index);
+      }
 
-      budgetContent.innerHTML = html;
-      budgetTracker.style.display = 'block';
+      renderDashboard();
     }
 
-    function updateSummary() {
-      const summary = document.getElementById('summary');
-      const summaryContent = document.getElementById('summaryContent');
+    function switchCompetitorImage(index, imgIdx) {
+      const options = Object.values(groupedProducts).flat();
+      const product = options[index].product;
+      const competitorImages = getFieldValue(product, 'Competitor Product Images');
 
-      let totalCost = 0;
-      let selectedCount = 0;
-      let selectedItems = [];
-      let costSelectionItems = {};
-
-      // Collect all samples
-      Object.keys(selectedProducts).forEach(groupName => {
-        const selectedIndices = selectedProducts[groupName];
-        costSelectionItems[groupName] = selectedIndices;
-
-        selectedIndices.forEach(index => {
-          const product = allProducts[index];
-          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
-          selectedCount++;
-          selectedItems.push({
-            groupName: groupName,
-            name: productName,
-            index: index
-          });
-        });
-      });
-
-      // Calculate totals based on selectedForCost (one option per group)
-      Object.keys(costSelectionItems).forEach(groupName => {
-        const costIndex = selectedForCost[groupName];
-        const indexToUse = costIndex !== undefined ? costIndex : costSelectionItems[groupName][0];
-
-        const product = allProducts[indexToUse];
-        const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
-        const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
-
-        const itemTotal = price * quantity;
-        totalCost += itemTotal;
-      });
-
-      let html = '<div class="summary-row"><span class="summary-label">Samples to Order:</span><span class="summary-value">' + selectedCount + '</span></div>';
-
-      selectedItems.forEach(item => {
-        html += `
-          <div class="summary-row" style="padding-left: 20px; font-size: 13px;">
-            <span class="summary-label">${item.groupName} - ${item.name}</span>
-          </div>
-        `;
-      });
-
-      html += '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #2d7a7a;"><div class="summary-label" style="margin-bottom: 15px; font-weight: 600; color: #1a1a1a;">Choose option for project total:</div>';
-
-      // Show cost selection options (only if multiple options)
-      Object.keys(costSelectionItems).forEach(groupName => {
-        const selectedIndices = costSelectionItems[groupName];
-
-        // Only show if there are multiple options
-        if (selectedIndices.length > 1) {
-          html += `<div style="margin-bottom: 18px;"><div style="font-weight: 500; margin-bottom: 10px; color: #2d7a7a;">${groupName}</div>`;
-
-          selectedIndices.forEach(index => {
-            const product = allProducts[index];
-            const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
-            const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
-            const isSelected = selectedForCost[groupName] === index;
-
-            html += `
-              <div style="margin-left: 10px; margin-bottom: 8px;">
-                <input type="radio" id="cost-option-${index}" name="cost-${groupName}" value="${index}" ${isSelected ? 'checked' : ''} onchange="setOptionForCost('${groupName}', ${index})">
-                <label for="cost-option-${index}" style="margin-left: 8px; cursor: pointer; color: #333;">${productName} - $${price.toFixed(2)}</label>
-              </div>
-            `;
-          });
-          html += '</div>';
-        } else if (selectedIndices.length === 1 && !selectedForCost[groupName]) {
-          // Auto-select if only one option
-          selectedForCost[groupName] = selectedIndices[0];
+      if (competitorImages && Array.isArray(competitorImages) && competitorImages[imgIdx]) {
+        const mainImage = document.getElementById(`competitorImage-${index}`);
+        if (mainImage) {
+          mainImage.innerHTML = `<img src="${competitorImages[imgIdx].url}" alt="Inspiration">`;
         }
-      });
 
-      html += '</div>';
+        const thumbnails = document.querySelectorAll(`#competitorThumbnails-${index} .product-thumbnail`);
+        thumbnails.forEach((thumb, i) => {
+          thumb.classList.toggle('active', i === imgIdx);
+        });
+      }
+    }
 
-      html += `
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #2d7a7a;">
-          <div class="budget-total">
-            <span>Total Project Cost:</span>
-            <span>$${totalCost.toFixed(2)}</span>
-          </div>
-        </div>
-      `;
+    function switchMyImage(index, imgIdx) {
+      const options = Object.values(groupedProducts).flat();
+      const product = options[index].product;
+      const myImages = getFieldValue(product, 'My Product Photos');
 
-      summaryContent.innerHTML = html;
-      summary.style.display = 'block';
+      if (myImages && Array.isArray(myImages) && myImages[imgIdx]) {
+        const mainImage = document.getElementById(`myImg-${index}`);
+        if (mainImage) {
+          mainImage.innerHTML = `<img src="${myImages[imgIdx].url}" alt="My Product">`;
+        }
+
+        const thumbnails = document.querySelectorAll(`#myThumbnails-${index} .product-thumbnail`);
+        thumbnails.forEach((thumb, i) => {
+          thumb.classList.toggle('active', i === imgIdx);
+        });
+      }
     }
 
     async function downloadAndSubmit() {
-      // Collect selected products data
-      const selectedData = {
-        project: currentProject,
-        selectedProducts: [],
-        contactName: '',
-        company: '',
-        email: '',
-        totals: {}
-      };
-
-      // Calculate totals and collect product info
-      let totalCost = 0;
-      let totalBudget = 0;
-
-      Object.keys(selectedProducts).forEach(groupName => {
-        const selectedIndices = selectedProducts[groupName];
-
-        selectedIndices.forEach(index => {
-          const product = allProducts[index];
-          const fields = product.fields;
-
-          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
-          const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
-          const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
-          const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
-          const myTotal = (price * quantity);
-          const budgetTotal = (budgetPrice * quantity);
-
-          selectedData.selectedProducts.push({
-            name: productName,
-            groupName: groupName,
-            cost: price,
-            budget: budgetPrice,
-            quantity: quantity,
-            total: myTotal,
-            budgetTotal: budgetTotal,
-            room: getFieldValue(product, 'Room (from Competitor\'s Products)') || '',
-            myNotes: getFieldValue(product, 'My Notes') || '',
-            images: getFieldValue(product, 'My Product Photos') || ''
-          });
-
-          totalCost += myTotal;
-          totalBudget += budgetTotal;
-        });
-      });
-
-      selectedData.totals = {
-        totalCost: totalCost,
-        totalBudget: totalBudget,
-        difference: totalBudget - totalCost
-      };
-
-      // Get client info from URL or session
-      const email = new URLSearchParams(window.location.search).get('email');
+      if (Object.keys(selectedProducts).length === 0 || Object.values(selectedProducts).every(arr => arr.length === 0)) {
+        alert('Please select at least one product option.');
+        return;
+      }
 
       try {
-        // Fetch client info
-        const clientResponse = await fetch(`${API_URL}/authenticate?email=${encodeURIComponent(email)}`);
-        if (clientResponse.ok) {
-          const clientData = await clientResponse.json();
-          selectedData.contactName = clientData.contactName;
-          selectedData.company = clientData.company;
-          selectedData.email = email;
-        }
+        const selectedData = {};
+        Object.entries(selectedProducts).forEach(([groupName, indices]) => {
+          selectedData[groupName] = indices.map(idx => {
+            const options = groupedProducts[groupName];
+            const { product } = options[idx];
+            return {
+              name: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
+              myPrice: parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0,
+              budgetPrice: parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0,
+              quantity: parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1
+            };
+          });
+        });
 
-        // Send to backend for PDF generation and email
         const response = await fetch(`${API_URL}/generate-summary`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(selectedData)
+          body: JSON.stringify({
+            email: currentEmail,
+            project: currentProject,
+            selectedProducts: selectedData
+          })
         });
 
-        if (response.ok) {
-          // Download PDF
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `sourcing_summary_${currentProject}_${new Date().toISOString().split('T')[0]}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
+        if (!response.ok) throw new Error('Failed to generate PDF');
 
-          alert('✅ Summary downloaded and submitted! Check your email for confirmation.');
-        } else {
-          alert('❌ Error generating summary. Please try again.');
-        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentProject}-sourcing.pdf`;
+        a.click();
+
+        alert('PDF generated and email sent successfully!');
       } catch (error) {
         console.error('Error:', error);
-        alert('❌ Error submitting summary: ' + error.message);
+        alert('Error: ' + error.message);
       }
     }
 
-    // Fetch projects on page load
-    fetchProjects();
+    loadDashboard();
   </script>
 </body>
 </html>
