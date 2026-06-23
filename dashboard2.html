@@ -898,6 +898,13 @@
                   </div>
                 `}
 
+                ${myNotes ? `
+                  <div class="notes-section">
+                    <div class="section-label">My Notes</div>
+                    <div>${myNotes}</div>
+                  </div>
+                ` : ''}
+
                 <div class="pricing-section">
                   <div class="section-label">Pricing</div>
                   <div class="price-row">
@@ -917,13 +924,6 @@
                     <span><strong>$${budgetTotal.toFixed(2)}</strong></span>
                   </div>
                 </div>
-
-                ${myNotes ? `
-                  <div class="notes-section">
-                    <div class="section-label">My Notes</div>
-                    <div>${myNotes}</div>
-                  </div>
-                ` : ''}
               </div>
             </div>`;
         });
