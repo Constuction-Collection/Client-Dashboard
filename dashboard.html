@@ -692,10 +692,16 @@
 
         const optionCount = options.length;
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
+
+        // If only one option, auto-select it
+        if (optionCount === 1 && !selectedProducts[groupName]) {
+          selectedProducts[groupName] = [options[0].index];
+        }
+
         let optionsHtml = `
           <div class="card-header">
             <div class="card-header-title">${groupName}</div>
-            <div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>
+            ${optionCount > 1 ? `<div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>` : ''}
           </div>
           <div class="options-container">
         `;
@@ -723,11 +729,13 @@
 
           optionsHtml += `
             <div class="${optionClass}" id="option-${index}">
-              <div class="option-header">
-                <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
-                  ${isSelected ? '✓ Selected' : 'Select'}
-                </button>
-              </div>
+              ${optionCount > 1 ? `
+                <div class="option-header">
+                  <button class="select-btn ${isSelected ? 'selected' : ''}" onclick="toggleProduct(${index}, '${groupName}')">
+                    ${isSelected ? '✓ Selected' : 'Select'}
+                  </button>
+                </div>
+              ` : ''}
 
               <div class="option-item-content">
                 <div class="images">
@@ -961,25 +969,32 @@
 
       html += '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #2d7a7a;"><div class="summary-label" style="margin-bottom: 15px; font-weight: 600; color: #1a1a1a;">Choose option for project total:</div>';
 
-      // Show cost selection options
+      // Show cost selection options (only if multiple options)
       Object.keys(costSelectionItems).forEach(groupName => {
         const selectedIndices = costSelectionItems[groupName];
-        html += `<div style="margin-bottom: 18px;"><div style="font-weight: 500; margin-bottom: 10px; color: #2d7a7a;">${groupName}</div>`;
 
-        selectedIndices.forEach(index => {
-          const product = allProducts[index];
-          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
-          const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
-          const isSelected = selectedForCost[groupName] === index;
+        // Only show if there are multiple options
+        if (selectedIndices.length > 1) {
+          html += `<div style="margin-bottom: 18px;"><div style="font-weight: 500; margin-bottom: 10px; color: #2d7a7a;">${groupName}</div>`;
 
-          html += `
-            <div style="margin-left: 10px; margin-bottom: 8px;">
-              <input type="radio" id="cost-option-${index}" name="cost-${groupName}" value="${index}" ${isSelected ? 'checked' : ''} onchange="setOptionForCost('${groupName}', ${index})">
-              <label for="cost-option-${index}" style="margin-left: 8px; cursor: pointer; color: #333;">${productName} - $${myPrice.toFixed(2)}</label>
-            </div>
-          `;
-        });
-        html += '</div>';
+          selectedIndices.forEach(index => {
+            const product = allProducts[index];
+            const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+            const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+            const isSelected = selectedForCost[groupName] === index;
+
+            html += `
+              <div style="margin-left: 10px; margin-bottom: 8px;">
+                <input type="radio" id="cost-option-${index}" name="cost-${groupName}" value="${index}" ${isSelected ? 'checked' : ''} onchange="setOptionForCost('${groupName}', ${index})">
+                <label for="cost-option-${index}" style="margin-left: 8px; cursor: pointer; color: #333;">${productName} - $${myPrice.toFixed(2)}</label>
+              </div>
+            `;
+          });
+          html += '</div>';
+        } else if (selectedIndices.length === 1 && !selectedForCost[groupName]) {
+          // Auto-select if only one option
+          selectedForCost[groupName] = selectedIndices[0];
+        }
       });
 
       html += '</div>';
