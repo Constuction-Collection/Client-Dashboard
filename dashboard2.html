@@ -1065,4 +1065,102 @@
     }
 
     async function downloadAndSubmit() {
-      cons
+      // Collect selected products data
+      const selectedData = {
+        project: currentProject,
+        selectedProducts: [],
+        contactName: '',
+        company: '',
+        email: '',
+        totals: {}
+      };
+
+      // Calculate totals and collect product info
+      let totalCost = 0;
+      let totalBudget = 0;
+
+      Object.keys(selectedProducts).forEach(groupName => {
+        const selectedIndices = selectedProducts[groupName];
+
+        selectedIndices.forEach(index => {
+          const product = allProducts[index];
+          const fields = product.fields;
+
+          const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+          const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+          const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+          const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
+          const myTotal = (price * quantity);
+          const budgetTotal = (budgetPrice * quantity);
+
+          selectedData.selectedProducts.push({
+            name: productName,
+            groupName: groupName,
+            cost: price,
+            budget: budgetPrice,
+            quantity: quantity,
+            total: myTotal,
+            budgetTotal: budgetTotal,
+            room: getFieldValue(product, 'Room (from Competitor\'s Products)') || '',
+            myNotes: getFieldValue(product, 'My Notes') || '',
+            images: getFieldValue(product, 'My Product Photos') || ''
+          });
+
+          totalCost += myTotal;
+          totalBudget += budgetTotal;
+        });
+      });
+
+      selectedData.totals = {
+        totalCost: totalCost,
+        totalBudget: totalBudget,
+        difference: totalBudget - totalCost
+      };
+
+      // Get client info from URL or session
+      const email = new URLSearchParams(window.location.search).get('email');
+
+      try {
+        // Fetch client info
+        const clientResponse = await fetch(`${API_URL}/authenticate?email=${encodeURIComponent(email)}`);
+        if (clientResponse.ok) {
+          const clientData = await clientResponse.json();
+          selectedData.contactName = clientData.contactName;
+          selectedData.company = clientData.company;
+          selectedData.email = email;
+        }
+
+        // Send to backend for PDF generation and email
+        const response = await fetch(`${API_URL}/generate-summary`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(selectedData)
+        });
+
+        if (response.ok) {
+          // Download PDF
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `sourcing_summary_${currentProject}_${new Date().toISOString().split('T')[0]}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          alert('✅ Summary downloaded and submitted! Check your email for confirmation.');
+        } else {
+          alert('❌ Error generating summary. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error submitting summary: ' + error.message);
+      }
+    }
+
+    // Fetch projects on page load
+    fetchProjects();
+  </script>
+</body>
+</html>
