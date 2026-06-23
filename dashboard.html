@@ -756,10 +756,10 @@
 
               ${mySize || competitorSize ? `
                 <div class="room-spec">
-                  <div class="section-label">Size</div>
+                  <div class="section-label">Specified Size</div>
                   <div style="display: flex; gap: 30px;">
-                    ${mySize ? `<div style="flex: 1;"><span style="color: #666; font-size: 13px;">Your Size:</span> ${mySize}</div>` : ''}
-                    ${competitorSize ? `<div style="flex: 1;"><span style="color: #666; font-size: 13px;">Competitor Size:</span> ${competitorSize}</div>` : ''}
+                    ${mySize ? `<div style="flex: 1;">${mySize}</div>` : ''}
+                    ${competitorSize ? `<div style="flex: 1;">${competitorSize}</div>` : ''}
                   </div>
                 </div>
               ` : ''}
