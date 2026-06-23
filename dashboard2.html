@@ -876,14 +876,27 @@
                   </div>
                 </div>
 
-                <div class="room-spec">
-                  <div class="section-label">Room Specification</div>
-                  <div class="product-info">
-                    ${room ? `<div class="info-row"><div class="info-label">Area/Room</div><div class="info-value">${room}</div></div>` : ''}
-                    ${mySize ? `<div class="info-row"><div class="info-label">Specified Size</div><div class="info-value">${mySize}</div></div>` : ''}
-                    <div class="info-row"><div class="info-label">Quantity</div><div class="info-value">${quantity}</div></div>
+                ${room ? `
+                  <div class="room-spec">
+                    <div class="section-label">Room Specification</div>
+                    ${room}
                   </div>
-                </div>
+                ` : ''}
+
+                ${mySize ? `
+                  <div class="room-spec">
+                    <div class="section-label">Specified Size</div>
+                    <div style="display: flex; gap: 30px;">
+                      <div style="flex: 1;"><span style="color: #666; font-size: 13px;">Size:</span> ${mySize}</div>
+                      <div style="flex: 1;"><span style="color: #666; font-size: 13px;">Quantity:</span> ${quantity}</div>
+                    </div>
+                  </div>
+                ` : `
+                  <div class="room-spec">
+                    <div class="section-label">Quantity</div>
+                    <div>${quantity}</div>
+                  </div>
+                `}
 
                 <div class="pricing-section">
                   <div class="section-label">Pricing</div>
