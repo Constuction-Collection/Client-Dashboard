@@ -231,6 +231,144 @@
       background: #f5f0e8;
       color: #8b6f47;
     }
+
+    .project-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .dashboard-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #2d7a7a;
+      background: white;
+      color: #2d7a7a;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .dashboard-btn:hover {
+      background: #2d7a7a;
+      color: white;
+    }
+
+    .admin-badge {
+      display: inline-block;
+      background: #2d7a7a;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .projects-section {
+      display: none;
+      margin-top: 60px;
+    }
+
+    .projects-section.show {
+      display: block;
+    }
+
+    .projects-header {
+      color: #1a1a1a;
+      font-size: 20px;
+      font-weight: 400;
+      margin-bottom: 30px;
+      letter-spacing: 0.3px;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .project-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 25px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .project-card:hover {
+      border-color: #2d7a7a;
+      box-shadow: 0 8px 24px rgba(45, 122, 122, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .project-card-name {
+      font-size: 18px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+
+    .project-card-type {
+      display: inline-block;
+      background: #f5f0e8;
+      color: #8b6f47;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 18px;
+    }
+
+    .project-card-type.comparison {
+      background: #e8f5f5;
+      color: #2d7a7a;
+    }
+
+    .project-card-buttons {
+      display: flex;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    .project-card-btn {
+      padding: 12px 16px;
+      border: none;
+      background: #2d7a7a;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .project-card-btn:hover {
+      background: #245f5f;
+    }
+
+    .project-card-btn.secondary {
+      background: white;
+      color: #2d7a7a;
+      border: 2px solid #2d7a7a;
+    }
+
+    .project-card-btn.secondary:hover {
+      background: #f0fafb;
+    }
   </style>
 </head>
 <body>
@@ -261,12 +399,10 @@
         <p style="margin-top: 15px; color: #666;">Validating email...</p>
       </div>
     </div>
-  </div>
 
-  <div class="projects-modal" id="projectsModal">
-    <div class="projects-content">
-      <h2>Select Your Project</h2>
-      <div class="project-list" id="projectList"></div>
+    <div class="projects-section" id="projectsSection">
+      <div class="projects-header" id="projectsHeader">Your Projects</div>
+      <div class="projects-grid" id="projectsGrid"></div>
     </div>
   </div>
 
@@ -274,6 +410,8 @@
     const API_URL = window.location.origin === 'http://localhost:3000'
       ? 'http://localhost:3000/api'
       : 'https://client-dashboard-ugki.onrender.com/api';
+
+    const ADMIN_EMAIL = 'sales@constructioncollection.com.au';
 
     async function handleLogin(event) {
       event.preventDefault();
@@ -289,6 +427,9 @@
       loading.style.display = 'block';
 
       try {
+        // Check if admin
+        const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
         // Authenticate email
         const authResponse = await fetch(`${API_URL}/authenticate?email=${encodeURIComponent(email)}`);
 
@@ -298,27 +439,30 @@
 
         const contactData = await authResponse.json();
 
-        // Fetch projects with types
-        const projectsResponse = await fetch(`${API_URL}/client-projects-with-types?email=${encodeURIComponent(email)}`);
-
-        if (!projectsResponse.ok) {
-          throw new Error('Failed to fetch projects');
+        // Fetch projects
+        let projects;
+        if (isAdmin) {
+          // Admin: fetch all projects
+          const projectsResponse = await fetch(`${API_URL}/all-projects-with-types`);
+          if (!projectsResponse.ok) {
+            throw new Error('Failed to fetch projects');
+          }
+          projects = await projectsResponse.json();
+        } else {
+          // Client: fetch only their projects
+          const projectsResponse = await fetch(`${API_URL}/client-projects-with-types?email=${encodeURIComponent(email)}`);
+          if (!projectsResponse.ok) {
+            throw new Error('Failed to fetch projects');
+          }
+          projects = await projectsResponse.json();
         }
-
-        const projects = await projectsResponse.json();
 
         if (projects.length === 0) {
-          throw new Error('No projects found for your account');
+          throw new Error('No projects found');
         }
 
-        // If only one project, redirect directly
-        if (projects.length === 1) {
-          redirectToDashboard(projects[0], email);
-          return;
-        }
-
-        // Show project selection modal
-        showProjectSelector(projects, email);
+        // Show projects as tiles
+        showProjectTiles(projects, email, isAdmin);
 
       } catch (error) {
         console.error('Error:', error);
@@ -329,39 +473,65 @@
       }
     }
 
-    function showProjectSelector(projects, email) {
-      const projectList = document.getElementById('projectList');
-      projectList.innerHTML = '';
+    function showProjectTiles(projects, email, isAdmin) {
+      const projectsSection = document.getElementById('projectsSection');
+      const projectsHeader = document.getElementById('projectsHeader');
+      const projectsGrid = document.getElementById('projectsGrid');
+
+      projectsGrid.innerHTML = '';
+
+      if (isAdmin) {
+        projectsHeader.innerHTML = 'All Projects <span class="admin-badge">Admin View</span>';
+      }
 
       projects.forEach(project => {
-        const item = document.createElement('div');
-        item.className = 'project-item';
-        item.onclick = () => redirectToDashboard(project, email);
+        const card = document.createElement('div');
+        card.className = 'project-card';
 
-        const typeBadge = project.projectType?.toLowerCase() || 'unknown';
         const typeLabel = project.projectType === 'Comparison' ? 'Comparison' : 'Sourcing';
+        const typeClass = project.projectType === 'Comparison' ? 'comparison' : 'sourcing';
 
-        item.innerHTML = `
-          <div class="project-name">
-            ${project.name}
-            <span class="project-type-badge ${typeBadge}">${typeLabel}</span>
-          </div>
-          <div class="project-type">Click to open dashboard</div>
-        `;
+        if (isAdmin) {
+          // Admin: show both dashboard buttons
+          card.innerHTML = `
+            <div class="project-card-name">${project.name}</div>
+            <div class="project-card-type ${typeClass}">${typeLabel}</div>
+            <div class="project-card-buttons">
+              <a class="project-card-btn" href="dashboard.html?email=${encodeURIComponent(email)}&project=${encodeURIComponent(project.name)}">
+                Interior Designer
+              </a>
+              <a class="project-card-btn secondary" href="dashboard2.html?email=${encodeURIComponent(email)}&project=${encodeURIComponent(project.name)}">
+                Landscape Designer
+              </a>
+            </div>
+          `;
+        } else {
+          // Client: auto-route button
+          const dashboard = project.projectType?.toLowerCase() === 'sourcing'
+            ? 'dashboard2.html'
+            : 'dashboard.html';
+          const dashboardLabel = project.projectType?.toLowerCase() === 'sourcing'
+            ? 'Landscape Designer'
+            : 'Interior Designer';
 
-        projectList.appendChild(item);
+          card.innerHTML = `
+            <div class="project-card-name">${project.name}</div>
+            <div class="project-card-type ${typeClass}">${typeLabel}</div>
+            <div class="project-card-buttons">
+              <a class="project-card-btn" href="${dashboard}?email=${encodeURIComponent(email)}&project=${encodeURIComponent(project.name)}">
+                Open ${dashboardLabel}
+              </a>
+            </div>
+          `;
+        }
+
+        projectsGrid.appendChild(card);
       });
 
-      document.getElementById('projectsModal').classList.add('show');
-    }
-
-    function redirectToDashboard(project, email) {
-      const dashboard = project.projectType?.toLowerCase() === 'sourcing'
-        ? 'dashboard2.html'
-        : 'dashboard.html';
-
-      const url = `${dashboard}?email=${encodeURIComponent(email)}&project=${encodeURIComponent(project.name)}`;
-      window.location.href = url;
+      // Hide login form and show projects
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('loading').style.display = 'none';
+      projectsSection.classList.add('show');
     }
   </script>
 </body>

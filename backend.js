@@ -231,6 +231,32 @@ app.get('/api/client-projects', async (req, res) => {
   }
 });
 
+// Get all projects with types (admin view)
+app.get('/api/all-projects-with-types', async (req, res) => {
+  try {
+    // Fetch all projects to map IDs to names and types
+    const projectsTableResponse = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/Projects`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
+        }
+      }
+    );
+
+    const projects = projectsTableResponse.data.records.map(proj => ({
+      name: proj.fields['Project Name'] || proj.id,
+      projectType: proj.fields['Project Type'] || 'Comparison'
+    })).sort((a, b) => a.name.localeCompare(b.name));
+
+    res.json(projects);
+
+  } catch (error) {
+    console.error('Error fetching all projects with types:', error.message);
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
 // Get client projects with their types (for routing to correct dashboard)
 app.get('/api/client-projects-with-types', async (req, res) => {
   try {

@@ -605,8 +605,9 @@
       const select = document.getElementById('projectSelect');
       projects.forEach(project => {
         const option = document.createElement('option');
-        option.value = project;
-        option.textContent = project;
+        const projectName = typeof project === 'string' ? project : project.name;
+        option.value = projectName;
+        option.textContent = projectName;
         select.appendChild(option);
       });
     }
