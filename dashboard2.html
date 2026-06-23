@@ -123,6 +123,9 @@
     }
 
     .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 24px;
       font-weight: 400;
       color: #1a1a1a;
@@ -503,12 +506,6 @@
       background: #246565;
     }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
     .card-header-title {
       font-size: 20px;
       font-weight: 500;
@@ -831,6 +828,7 @@
         options.forEach(({ product, index }) => {
           const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
           const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+          const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
           const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
           const room = getFieldValue(product, 'Room (from Competitor\'s Products)') || '';
           const mySize = getFieldValue(product, 'Size') || '';
@@ -838,6 +836,7 @@
           const myNotes = getFieldValue(product, 'My Notes') || '';
 
           const totalPrice = price * quantity;
+          const budgetTotal = budgetPrice * quantity;
           const isSelected = selectedProducts[groupName] && selectedProducts[groupName].includes(index);
           const optionClass = isSelected ? 'option-item selected' : 'option-item';
 
@@ -872,7 +871,6 @@
                   ${room ? `<div class="info-row"><div class="info-label">Area/Room</div><div class="info-value">${room}</div></div>` : ''}
                   ${mySize ? `<div class="info-row"><div class="info-label">Specified Size</div><div class="info-value">${mySize}</div></div>` : ''}
                   <div class="info-row"><div class="info-label">Quantity</div><div class="info-value">${quantity}</div></div>
-                  <div class="info-row"><div class="info-label">Budgeted Price</div><div class="info-value">$${price.toFixed(2)}</div></div>
                   ${myNotes ? `<div class="info-row"><div class="info-label">Notes</div><div class="info-value">${myNotes}</div></div>` : ''}
                 </div>
               </div>
@@ -884,7 +882,7 @@
                 </div>
                 <div class="price-row">
                   <span>Budgeted Price per Unit:</span>
-                  <span>$${price.toFixed(2)}</span>
+                  <span>$${budgetPrice.toFixed(2)}</span>
                 </div>
                 <div class="price-row" style="border-top: 1px solid #e0e0e0; padding-top: 8px; margin-top: 8px;">
                   <span><strong>Your Total Price:</strong></span>
@@ -892,7 +890,7 @@
                 </div>
                 <div class="price-row">
                   <span><strong>Budgeted Total Price:</strong></span>
-                  <span><strong>$${totalPrice.toFixed(2)}</strong></span>
+                  <span><strong>$${budgetTotal.toFixed(2)}</strong></span>
                 </div>
               </div>
             </div>
