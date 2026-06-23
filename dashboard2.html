@@ -102,6 +102,35 @@
       box-shadow: 0 0 0 3px rgba(45, 122, 122, 0.1);
     }
 
+    .project-selector {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .project-selector label {
+      font-weight: 500;
+      color: #e0e0e0;
+      font-size: 15px;
+    }
+
+    .project-selector select {
+      padding: 12px 16px;
+      border: 1px solid #2d7a7a;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      background: white;
+      color: #1a1a1a;
+      transition: all 0.2s ease;
+    }
+
+    .project-selector select:hover,
+    .project-selector select:focus {
+      border-color: #2d7a7a;
+      box-shadow: 0 0 0 3px rgba(45, 122, 122, 0.1);
+    }
+
     .card {
       background: white;
       border-radius: 12px;
@@ -631,6 +660,12 @@
           <div class="company-name">Construction Collection</div>
           <h1>Product Sourcing</h1>
         </div>
+      </div>
+      <div class="project-selector">
+        <label for="projectSelect">Select Project:</label>
+        <select id="projectSelect" onchange="changeProject()">
+          <option value="">-- Choose a project --</option>
+        </select>
       </div>
     </div>
 
