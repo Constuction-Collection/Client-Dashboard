@@ -483,6 +483,9 @@
       width: 260px;
       height: fit-content;
       background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
       flex-shrink: 0;
     }
 
@@ -658,7 +661,7 @@
         </div>
         <div class="header-title">
           <div class="company-name">Construction Collection</div>
-          <h1>Product Sourcing</h1>
+          <h1 id="pageTitle">Product Sourcing</h1>
         </div>
       </div>
       <div class="project-selector">
@@ -752,6 +755,9 @@
         return;
       }
 
+      // Update page title with project name
+      document.getElementById('pageTitle').textContent = currentProject;
+
       try {
         document.getElementById('dashboardContent').innerHTML = '<div class="loading">Loading dashboard...</div>';
 
@@ -777,10 +783,7 @@
     }
 
     function renderDashboard() {
-      let html = `<div class="card">
-        <div class="card-header">
-          <span>${currentProject}</span>
-        </div>`;
+      let html = `<div class="card">`;
 
       let productSidebarHtml = '';
 
