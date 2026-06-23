@@ -415,59 +415,69 @@
       line-height: 1.5;
     }
 
-    .products-sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 200px;
-      height: 100vh;
-      background: #f8f7f5;
-      padding: 40px 20px;
-      overflow-y: auto;
-      border-right: 1px solid #e0e0e0;
-      z-index: 100;
-    }
-
-    .products-sidebar-header {
-      font-size: 12px;
-      font-weight: 600;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 20px;
-    }
-
-    .products-list {
+    .main-wrapper {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
+      gap: 30px;
+      margin-top: 30px;
     }
 
-    .product-link {
-      padding: 10px 12px;
+    .sidebar {
+      position: sticky;
+      top: 20px;
+      width: 260px;
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 10px;
+      height: fit-content;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 600;
       color: #666;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+      letter-spacing: 0.8px;
+    }
+
+    .sidebar-list {
+      list-style: none;
+      max-height: calc(100vh - 250px);
+      overflow-y: auto;
+    }
+
+    .sidebar-list li {
+      margin-bottom: 6px;
+    }
+
+    .sidebar-list button {
+      width: 100%;
+      padding: 11px 12px;
+      background: #f5f5f5;
+      border: none;
+      border-radius: 6px;
       font-size: 13px;
       cursor: pointer;
-      border-radius: 6px;
-      transition: all 0.2s ease;
+      text-align: left;
+      color: #666;
+      transition: all 0.2s;
       border-left: 3px solid transparent;
     }
 
-    .product-link:hover {
-      background: #efefef;
-      color: #2d7a7a;
+    .sidebar-list button:hover {
+      background: #eef5f5;
       border-left-color: #2d7a7a;
     }
 
-    .product-link.active {
-      background: #e8f5f5;
-      color: #2d7a7a;
+    .sidebar-list button.active {
+      background: #eef5f5;
       border-left-color: #2d7a7a;
-      font-weight: 500;
+      font-weight: 600;
     }
 
-    .container {
-      margin-left: 200px;
+    .content-wrapper {
+      flex: 1;
     }
 
     .summary-section {
@@ -585,11 +595,6 @@
   </style>
 </head>
 <body>
-  <div class="products-sidebar" id="productsSidebar">
-    <div class="products-sidebar-header">Products</div>
-    <div class="products-list" id="productsList"></div>
-  </div>
-
   <div class="container">
     <div class="header">
       <div class="header-content">
@@ -603,7 +608,15 @@
       </div>
     </div>
 
-    <div id="dashboardContent"></div>
+    <div class="main-wrapper" id="mainWrapper">
+      <div class="sidebar">
+        <div class="sidebar-title">Products</div>
+        <ul class="sidebar-list" id="sidebarList"></ul>
+      </div>
+      <div class="content-wrapper">
+        <div id="dashboardContent"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -722,7 +735,7 @@
 
         options.forEach(({ product, index }) => {
           const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
-          productSidebarHtml += `<div class="product-link" data-product-index="${index}" onclick="scrollToProduct(${index})">${productName}</div>`;
+          productSidebarHtml += `<li><button class="sidebar-item" data-product-index="${index}" onclick="scrollToProduct(${index})">${productName}</button></li>`;
 
           const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
           const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
@@ -827,7 +840,7 @@
       </div>`;
 
       document.getElementById('dashboardContent').innerHTML = html;
-      document.getElementById('productsList').innerHTML = productSidebarHtml;
+      document.getElementById('sidebarList').innerHTML = productSidebarHtml;
     }
 
     function scrollToProduct(index) {
@@ -837,10 +850,10 @@
           productElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
           // Update active state in sidebar
-          document.querySelectorAll('.product-link').forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('data-product-index') == index) {
-              link.classList.add('active');
+          document.querySelectorAll('.sidebar-item').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-product-index') == index) {
+              btn.classList.add('active');
             }
           });
         }
