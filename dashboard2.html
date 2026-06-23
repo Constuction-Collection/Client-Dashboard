@@ -540,6 +540,20 @@
       flex: 1;
     }
 
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+      margin-bottom: 50px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
     .summary-section {
       margin-top: 50px;
     }
@@ -785,7 +799,7 @@
     }
 
     function renderDashboard() {
-      let html = `<div class="card">`;
+      let html = `<div class="dashboard">`;
 
       let productSidebarHtml = '';
 
@@ -793,11 +807,12 @@
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
 
         html += `
-          <div class="card-header">
-            <span>${groupName}</span>
-            <span class="option-count-badge">Select from ${options.length}</span>
-          </div>
-          <div class="options-container" id="options-${groupName}">`;
+          <div class="product-card">
+            <div class="card-header">
+              <span>${groupName}</span>
+              <span class="option-count-badge">Select from ${options.length}</span>
+            </div>
+            <div class="options-container" id="options-${groupName}">`;
 
         options.forEach(({ product, index }) => {
           const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
@@ -900,7 +915,9 @@
             </div>`;
         });
 
-        html += `</div>`;
+        html += `
+          </div>
+        </div>`;
       });
 
       html += `
