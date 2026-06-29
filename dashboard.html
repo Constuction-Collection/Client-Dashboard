@@ -755,15 +755,13 @@
               ` : ''}
 
               ${mySize || competitorSize ? `
-                <div style="display: flex; gap: 30px;">
-                  <div style="flex: 1;">
-                    <div class="room-spec">
+                <div class="room-spec">
+                  <div style="display: flex; gap: 0;">
+                    <div style="flex: 1; padding-right: 20px; border-right: 1px solid #e0e0e0;">
                       <div class="section-label">Specified Size</div>
                       <div>${competitorSize || ''}</div>
                     </div>
-                  </div>
-                  <div style="flex: 1;">
-                    <div class="room-spec">
+                    <div style="flex: 1; padding-left: 20px;">
                       <div class="section-label">My Size</div>
                       <div>${mySize || ''}</div>
                     </div>
