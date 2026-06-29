@@ -755,12 +755,23 @@
               ` : ''}
 
               ${mySize || competitorSize ? `
-                <div class="room-spec">
-                  <div class="section-label">Specified Size</div>
-                  <div style="display: flex; gap: 30px;">
-                    ${mySize ? `<div style="flex: 1;">${mySize}</div>` : ''}
-                    ${competitorSize ? `<div style="flex: 1;">${competitorSize}</div>` : ''}
-                  </div>
+                <div style="display: flex; gap: 30px;">
+                  ${competitorSize ? `
+                    <div style="flex: 1;">
+                      <div class="room-spec">
+                        <div class="section-label">Specified Size</div>
+                        <div>${competitorSize}</div>
+                      </div>
+                    </div>
+                  ` : ''}
+                  ${mySize ? `
+                    <div style="flex: 1;">
+                      <div class="room-spec">
+                        <div class="section-label">My Size</div>
+                        <div>${mySize}</div>
+                      </div>
+                    </div>
+                  ` : ''}
                 </div>
               ` : ''}
 
