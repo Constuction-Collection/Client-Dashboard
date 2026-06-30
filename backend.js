@@ -14,6 +14,7 @@ const BASE_ID = 'appLZ8hWsuUjHL2z9';
 const TABLE_ID = 'tbl7IAdi7m8mV7KOU'; // My Product Suggestions
 const COMPETITOR_PRODUCTS_TABLE_ID = 'tbltrtUEkRnX3uLOh'; // Competitor's Products
 const CONTACTS_TABLE_ID = 'tblSPtl75lcRjeLuP'; // My Contacts
+const PROJECTS_TABLE_ID = 'tblWGaaUBCnXJKeu'; // Projects
 
 // Serve the dashboard HTML
 app.use(express.static('.'));
@@ -289,7 +290,7 @@ app.get('/api/client-projects-with-types', async (req, res) => {
 
     // Fetch all projects to map IDs to names and types
     const projectsTableResponse = await axios.get(
-      `https://api.airtable.com/v0/${BASE_ID}/Projects`,
+      `https://api.airtable.com/v0/${BASE_ID}/${PROJECTS_TABLE_ID}`,
       {
         headers: {
           'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
