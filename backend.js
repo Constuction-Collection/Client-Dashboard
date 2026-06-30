@@ -287,7 +287,6 @@ app.get('/api/client-projects-with-types', async (req, res) => {
 
     const contactId = contacts[0].id;
     const contactName = contacts[0].fields['Contact Name'];
-    console.log(`Contact ID for ${email}: ${contactId}`);
 
     // Fetch all projects to map IDs to names and types
     const projectsTableResponse = await axios.get(
@@ -311,10 +310,8 @@ app.get('/api/client-projects-with-types', async (req, res) => {
     const clientProjects = [];
 
     projectsTableResponse.data.records.forEach((proj) => {
-      const contactPersonIds = proj.fields['Contact Person'] || [];
-      console.log(`Project: ${proj.fields['Project Name']}, Contact Person IDs:`, contactPersonIds);
-      const isContactMatch = contactPersonIds.includes(contactId);
-      console.log(`Contact match for ${proj.fields['Project Name']}: ${isContactMatch}`);
+      const clientContactIds = proj.fields['Client Contact'] || [];
+      const isContactMatch = clientContactIds.includes(contactId);
 
       if (isContactMatch) {
         clientProjects.push({
