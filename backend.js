@@ -319,8 +319,8 @@ app.get('/api/client-projects-with-types', async (req, res) => {
     const clientProjectMap = {};
 
     productsResponse.data.records.forEach((record) => {
-      const requestingCompanyIds = record.fields['Requesting Company'] || [];
-      const isContactMatch = requestingCompanyIds.includes(contactId);
+      const contactNameIds = record.fields['Contact Name'] || [];
+      const isContactMatch = contactNameIds.includes(contactId);
 
       if (isContactMatch) {
         const projectIds = record.fields['Project'] || [];
