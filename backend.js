@@ -305,38 +305,23 @@ app.get('/api/client-projects-with-types', async (req, res) => {
       };
     });
 
-    // Get all Competitor's Products records
-    const productsResponse = await axios.get(
-      `https://api.airtable.com/v0/${BASE_ID}/${COMPETITOR_PRODUCTS_TABLE_ID}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`
-        }
-      }
-    );
+    // Get projects associated with this contact from Projects table
+    const clientProjects = [];
 
-    // Get unique projects for this contact with their types
-    const clientProjectMap = {};
-
-    productsResponse.data.records.forEach((record) => {
-      const contactNameIds = record.fields['Contact Name'] || [];
-      const isContactMatch = contactNameIds.includes(contactId);
+    projectsTableResponse.data.records.forEach((proj) => {
+      const contactPersonIds = proj.fields['Contact Person'] || [];
+      const isContactMatch = contactPersonIds.includes(contactId);
 
       if (isContactMatch) {
-        const projectIds = record.fields['Project'] || [];
-        projectIds.forEach(projectId => {
-          if (!clientProjectMap[projectId]) {
-            clientProjectMap[projectId] = {
-              name: projectMap[projectId]?.name || projectId,
-              projectType: projectMap[projectId]?.type || 'Comparison'
-            };
-          }
+        clientProjects.push({
+          name: proj.fields['Project Name'] || proj.id,
+          projectType: proj.fields['Project Type'] || 'Comparison'
         });
       }
     });
 
-    // Convert to array
-    const projects = Object.values(clientProjectMap).sort((a, b) => a.name.localeCompare(b.name));
+    // Sort by project name
+    const projects = clientProjects.sort((a, b) => a.name.localeCompare(b.name));
 
     res.json(projects);
 
