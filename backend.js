@@ -16,6 +16,9 @@ const COMPETITOR_PRODUCTS_TABLE_ID = 'tbltrtUEkRnX3uLOh'; // Competitor's Produc
 const CONTACTS_TABLE_ID = 'tblSPtl75lcRjeLuP'; // My Contacts
 const PROJECTS_TABLE_ID = 'tblyWGaaUBCnXJKeu'; // Projects
 
+// Share link token store (in-memory)
+const shareTokens = {};
+
 // Serve the dashboard HTML
 app.use(express.static('.'));
 
@@ -574,6 +577,76 @@ Construction Collection
   } catch (error) {
     console.error('Error generating summary:', error.message);
     res.status(500).json({ error: 'Failed to generate summary' });
+  }
+});
+
+// Generate share link
+app.post('/api/generate-share-link', async (req, res) => {
+  try {
+    const { email, project } = req.body;
+
+    if (!email || !project) {
+      return res.status(400).json({ error: 'Email and project required' });
+    }
+
+    // Generate random token
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+    // Store token mapping
+    shareTokens[token] = { email, project, createdAt: new Date() };
+
+    res.json({
+      token,
+      shareUrl: `${process.env.BASE_URL || 'https://client-dashboard-ugki.onrender.com'}/share.html?token=${token}`
+    });
+  } catch (error) {
+    console.error('Error generating share link:', error.message);
+    res.status(500).json({ error: 'Failed to generate share link' });
+  }
+});
+
+// Get project data for share link (no authentication required)
+app.get('/api/share/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const shareData = shareTokens[token];
+    if (!shareData) {
+      return res.status(404).json({ error: 'Share link not found' });
+    }
+
+    const { project } = shareData;
+
+    // Fetch products for this project
+    const response = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?filterByFormula={Project}="${project}"`,
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const products = response.data.records.map(record => ({
+      id: record.id,
+      productName: record.fields['My Product Suggestion'] || 'Unknown',
+      room: record.fields['Room (from Competitor\'s Products)'] || '',
+      mySize: record.fields['My Size'] || '',
+      competitorSize: record.fields['Competitor_Product_Size'] || '',
+      myImages: record.fields['My Product Photos'] || [],
+      competitorImages: record.fields['Competitor Product Images'] || [],
+      myNotes: record.fields['My Notes'] || '',
+      competitorNotes: record.fields['Competitor_Product_Notes'] || ''
+    }));
+
+    res.json({
+      project,
+      products
+    });
+  } catch (error) {
+    console.error('Error fetching share data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch share data' });
   }
 });
 

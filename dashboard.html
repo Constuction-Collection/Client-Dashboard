@@ -103,6 +103,33 @@
       box-shadow: 0 0 0 3px rgba(45, 122, 122, 0.1);
     }
 
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .action-btn {
+      padding: 12px 20px;
+      background: #2d7a7a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: #245f5f;
+      box-shadow: 0 4px 12px rgba(45, 122, 122, 0.3);
+    }
+
+    .action-btn:active {
+      transform: translateY(1px);
+    }
+
     .dashboard {
       display: flex;
       flex-direction: column;
@@ -530,6 +557,10 @@
         <select id="projectSelect" onchange="changeProject()">
           <option value="">-- Choose a project --</option>
         </select>
+      </div>
+      <div class="header-actions">
+        <button class="action-btn" onclick="exportPDF()">Export PDF</button>
+        <button class="action-btn" onclick="generateShareLink()">Share Project</button>
       </div>
     </div>
 
@@ -1119,6 +1150,52 @@
 
     // Fetch projects on page load
     fetchProjects();
+
+    // Export to PDF
+    function exportPDF() {
+      const projectName = document.getElementById('projectSelect').value;
+      if (!projectName) {
+        alert('Please select a project first');
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get('email');
+
+      window.location.href = `/api/generate-summary?email=${encodeURIComponent(email)}&project=${encodeURIComponent(projectName)}&excludePricing=true`;
+    }
+
+    // Generate share link
+    function generateShareLink() {
+      const projectName = document.getElementById('projectSelect').value;
+      if (!projectName) {
+        alert('Please select a project first');
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get('email');
+
+      fetch(`${API_URL}/generate-share-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, project: projectName })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.shareUrl) {
+          const url = data.shareUrl;
+          navigator.clipboard.writeText(url).then(() => {
+            alert(`Share link copied to clipboard!\n\n${url}`);
+          }).catch(() => {
+            alert(`Share link generated:\n\n${url}`);
+          });
+        } else {
+          alert('Error generating share link');
+        }
+      })
+      .catch(err => alert('Error: ' + err.message));
+    }
   </script>
 </body>
 </html>

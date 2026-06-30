@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shared Project</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8f7f5;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 50px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .header-logo {
+      height: 70px;
+      display: flex;
+      align-items: center;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .header-logo img {
+      height: 100%;
+      width: auto;
+      object-fit: contain;
+    }
+
+    h1 {
+      color: #ffffff;
+      font-size: 36px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 30px;
+      margin-bottom: 50px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .product-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 20px;
+    }
+
+    .product-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .section-content {
+      font-size: 15px;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+
+    .images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .image-box {
+      background: #fafaf9;
+      border-radius: 8px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .image-label {
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+      font-size: 16px;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-content">
+        <div class="header-logo">
+          <img src="/cc-logo.png" alt="Construction Collection">
+        </div>
+        <div>
+          <h1 id="projectTitle">Project</h1>
+        </div>
+      </div>
+    </div>
+
+    <div id="content" class="loading">Loading project details...</div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin === 'http://localhost:3000'
+      ? 'http://localhost:3000/api'
+      : 'https://client-dashboard-ugki.onrender.com/api';
+
+    async function loadProject() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+
+        if (!token) {
+          document.getElementById('content').innerHTML = '<div class="error">Invalid share link</div>';
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/share/${token}`);
+        if (!response.ok) {
+          throw new Error('Share link not found or expired');
+        }
+
+        const { project, products } = await response.json();
+        document.getElementById('projectTitle').textContent = project;
+
+        let html = '<div class="product-grid">';
+
+        products.forEach(product => {
+          html += `
+            <div class="product-card">
+              <div class="product-name">${product.productName}</div>
+
+              ${product.room ? `
+                <div class="product-section">
+                  <div class="section-label">Room Specification</div>
+                  <div class="section-content">${product.room}</div>
+                </div>
+              ` : ''}
+
+              ${product.mySize || product.competitorSize ? `
+                <div class="product-section">
+                  <div class="section-label">Specified Size</div>
+                  <div class="section-content">${product.mySize || product.competitorSize}</div>
+                </div>
+              ` : ''}
+
+              ${product.competitorImages.length > 0 || product.myImages.length > 0 ? `
+                <div class="product-section">
+                  <div class="section-label">Images</div>
+                  <div class="images">
+                    ${product.competitorImages.length > 0 ? `
+                      <div>
+                        <div class="image-box">
+                          <img src="${product.competitorImages[0].url}" alt="Inspiration">
+                        </div>
+                        <div class="image-label">Inspiration Image</div>
+                      </div>
+                    ` : ''}
+                    ${product.myImages.length > 0 ? `
+                      <div>
+                        <div class="image-box">
+                          <img src="${product.myImages[0].url}" alt="My Product">
+                        </div>
+                        <div class="image-label">My Product</div>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              ` : ''}
+
+              ${product.myNotes ? `
+                <div class="product-section">
+                  <div class="section-label">My Notes</div>
+                  <div class="section-content">${product.myNotes}</div>
+                </div>
+              ` : ''}
+
+              ${product.competitorNotes ? `
+                <div class="product-section">
+                  <div class="section-label">Notes</div>
+                  <div class="section-content">${product.competitorNotes}</div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        });
+
+        html += '</div>';
+        document.getElementById('content').innerHTML = html;
+
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('content').innerHTML = `<div class="error">Error loading project: ${error.message}</div>`;
+      }
+    }
+
+    loadProject();
+  </script>
+</body>
+</html>
