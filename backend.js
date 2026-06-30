@@ -14,7 +14,7 @@ const BASE_ID = 'appLZ8hWsuUjHL2z9';
 const TABLE_ID = 'tbl7IAdi7m8mV7KOU'; // My Product Suggestions
 const COMPETITOR_PRODUCTS_TABLE_ID = 'tbltrtUEkRnX3uLOh'; // Competitor's Products
 const CONTACTS_TABLE_ID = 'tblSPtl75lcRjeLuP'; // My Contacts
-const PROJECTS_TABLE_ID = 'tblWGaaUBCnXJKeu'; // Projects
+const PROJECTS_TABLE_ID = 'tblyWGaaUBCnXJKeu'; // Projects
 
 // Serve the dashboard HTML
 app.use(express.static('.'));
