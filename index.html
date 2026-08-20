@@ -461,6 +461,11 @@
           throw new Error('No projects found');
         }
 
+        // Store email in sessionStorage for back button functionality
+        sessionStorage.setItem('clientEmail', email);
+        sessionStorage.setItem('clientIsAdmin', isAdmin ? 'true' : 'false');
+        sessionStorage.setItem('clientProjects', JSON.stringify(projects));
+
         // Show projects as tiles
         showProjectTiles(projects, email, isAdmin);
 
@@ -533,6 +538,27 @@
       document.getElementById('loading').style.display = 'none';
       projectsSection.classList.add('show');
     }
+
+    // Check sessionStorage on page load to restore previous session (for back button)
+    function checkSessionAndRestore() {
+      const storedEmail = sessionStorage.getItem('clientEmail');
+      const storedIsAdmin = sessionStorage.getItem('clientIsAdmin') === 'true';
+      const storedProjects = sessionStorage.getItem('clientProjects');
+
+      if (storedEmail && storedProjects) {
+        try {
+          const projects = JSON.parse(storedProjects);
+          // Restore projects without requiring login again
+          showProjectTiles(projects, storedEmail, storedIsAdmin);
+        } catch (error) {
+          console.error('Error restoring session:', error);
+          // If there's an error, just show login form
+        }
+      }
+    }
+
+    // Check and restore session on page load
+    checkSessionAndRestore();
   </script>
 </body>
 </html>
