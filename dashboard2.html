@@ -581,6 +581,13 @@
       color: #2d7a7a;
     }
 
+    .sidebar-list button.selected {
+      background: #c5dede;
+      border-left-color: #2d7a7a;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
     .content-wrapper {
       flex: 1;
     }
@@ -1017,6 +1024,25 @@
       }, 100);
     }
 
+    function updateSidebarSelection() {
+      // Update all sidebar items to reflect selection status
+      const options = Object.values(groupedProducts).flat();
+      document.querySelectorAll('.sidebar-item').forEach(btn => {
+        const productIndex = parseInt(btn.getAttribute('data-product-index'));
+        const groupName = Object.keys(groupedProducts).find(name => {
+          return groupedProducts[name].some(o => options.indexOf(o) === productIndex);
+        });
+
+        const isSelected = groupName && selectedProducts[groupName] && selectedProducts[groupName].includes(productIndex);
+
+        if (isSelected) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+    }
+
     function toggleProduct(index, groupName) {
       if (!selectedProducts[groupName]) {
         selectedProducts[groupName] = [];
@@ -1030,6 +1056,7 @@
       }
 
       renderDashboard();
+      updateSidebarSelection();
     }
 
     function switchCompetitorImage(index, imgIdx) {

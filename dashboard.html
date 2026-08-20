@@ -513,6 +513,13 @@
       color: #2d7a7a;
     }
 
+    .sidebar-list button.selected {
+      background: #c5dede;
+      border-left-color: #2d7a7a;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
     .content-wrapper {
       flex: 1;
     }
@@ -921,6 +928,20 @@
       });
     }
 
+    function updateSidebarSelection() {
+      // Update all sidebar items to reflect selection status
+      document.querySelectorAll('.sidebar-item').forEach(btn => {
+        const productName = btn.getAttribute('data-product');
+        const isSelected = selectedProducts[productName] && selectedProducts[productName].length > 0;
+
+        if (isSelected) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+    }
+
     function filterSidebar() {
       const searchInput = document.getElementById('sidebarSearch').value.toLowerCase();
       const sidebarButtons = document.querySelectorAll('.sidebar-item');
@@ -959,6 +980,7 @@
 
       renderDashboard();
       updateSummary();
+      updateSidebarSelection();
     }
 
     function setOptionForCost(groupName, index) {
