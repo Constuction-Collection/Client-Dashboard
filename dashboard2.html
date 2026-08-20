@@ -588,6 +588,13 @@
       color: white;
     }
 
+    .sidebar-list button.partial {
+      background: #cfe6e6;
+      border-left-color: #2d7a7a;
+      font-weight: 600;
+      color: #2d7a7a;
+    }
+
     .content-wrapper {
       flex: 1;
     }
@@ -597,6 +604,22 @@
       flex-direction: column;
       gap: 50px;
       margin-bottom: 50px;
+    }
+
+    .room-section {
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+    }
+
+    .room-section-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2d7a7a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #2d7a7a;
     }
 
     .product-card {
@@ -746,7 +769,7 @@
 
     <div class="main-wrapper" id="mainWrapper">
       <div class="sidebar">
-        <div class="sidebar-title">Products</div>
+        <div class="sidebar-title">Rooms</div>
         <ul class="sidebar-list" id="sidebarList"></ul>
       </div>
       <div class="content-wrapper">
@@ -765,6 +788,24 @@
     let groupedProducts = {};
     let selectedProducts = {};
     let costSelection = {};
+    let roomIndexMap = [];
+
+    // Returns the room name for a product, or 'Unassigned' when blank
+    function getRoomName(product) {
+      let room = getFieldValue(product, 'Room (from Competitor\'s Products)');
+      if (Array.isArray(room)) room = room.filter(Boolean).join(', ');
+      room = (room === null || room === undefined) ? '' : String(room).trim();
+      return room || 'Unassigned';
+    }
+
+    // Alphabetical, with 'Unassigned' always last
+    function sortRoomNames(names) {
+      return names.slice().sort((a, b) => {
+        if (a === 'Unassigned') return 1;
+        if (b === 'Unassigned') return -1;
+        return a.localeCompare(b);
+      });
+    }
 
     function getImageUrl(images) {
       if (!images) return null;
@@ -859,7 +900,28 @@
 
       let productSidebarHtml = '';
 
+      // Group the product cards by room
+      const roomGroups = {};
       Object.entries(groupedProducts).forEach(([groupName, options]) => {
+        const roomName = getRoomName(options[0].product);
+        if (!roomGroups[roomName]) roomGroups[roomName] = [];
+        roomGroups[roomName].push([groupName, options]);
+      });
+
+      const roomNames = sortRoomNames(Object.keys(roomGroups));
+      roomIndexMap = roomNames.map(roomName => ({
+        roomName: roomName,
+        groupNames: roomGroups[roomName].map(entry => entry[0])
+      }));
+
+      roomNames.forEach((roomName, roomIdx) => {
+        productSidebarHtml += `<li><button class="sidebar-item" data-room-index="${roomIdx}" onclick="scrollToRoom(${roomIdx})">${roomName}</button></li>`;
+
+        html += `
+          <div class="room-section" id="room-section-${roomIdx}">
+            <div class="room-section-title">${roomName}</div>`;
+
+      roomGroups[roomName].forEach(([groupName, options]) => {
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
 
         html += `
@@ -872,7 +934,6 @@
 
         options.forEach(({ product, index }) => {
           const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
-          productSidebarHtml += `<li><button class="sidebar-item" data-product-index="${index}" onclick="scrollToProduct(${index})">${productName}</button></li>`;
 
           const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
           const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
@@ -998,6 +1059,10 @@
         </div>`;
       });
 
+        html += `
+          </div>`;
+      });
+
       html += `
         <div class="action-buttons">
           <button class="btn btn-primary" onclick="downloadAndSubmit()">Generate PDF & Submit</button>
@@ -1006,6 +1071,23 @@
 
       document.getElementById('dashboardContent').innerHTML = html;
       document.getElementById('sidebarList').innerHTML = productSidebarHtml;
+      updateSidebarSelection();
+    }
+
+    function scrollToRoom(roomIdx) {
+      setTimeout(() => {
+        const section = document.getElementById(`room-section-${roomIdx}`);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          document.querySelectorAll('.sidebar-item').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-room-index') == roomIdx) {
+              btn.classList.add('active');
+            }
+          });
+        }
+      }, 100);
     }
 
     function scrollToProduct(index) {
@@ -1042,18 +1124,22 @@
     }
 
     function updateSidebarSelection() {
-      // Build a set of all selected product indices
-      const selectedIndices = new Set();
-      Object.values(selectedProducts).forEach(arr => {
-        (arr || []).forEach(i => selectedIndices.add(String(i)));
-      });
-
       document.querySelectorAll('.sidebar-item').forEach(btn => {
-        const productIndex = btn.getAttribute('data-product-index');
-        if (selectedIndices.has(productIndex)) {
+        const roomIdx = parseInt(btn.getAttribute('data-room-index'), 10);
+        const entry = roomIndexMap[roomIdx];
+
+        btn.classList.remove('selected', 'partial');
+        if (!entry) return;
+
+        const total = entry.groupNames.length;
+        const done = entry.groupNames.filter(groupName =>
+          selectedProducts[groupName] && selectedProducts[groupName].length > 0
+        ).length;
+
+        if (total > 0 && done === total) {
           btn.classList.add('selected');
-        } else {
-          btn.classList.remove('selected');
+        } else if (done > 0) {
+          btn.classList.add('partial');
         }
       });
     }

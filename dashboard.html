@@ -137,6 +137,22 @@
       margin-bottom: 50px;
     }
 
+    .room-section {
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+    }
+
+    .room-section-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2d7a7a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #2d7a7a;
+    }
+
     .product-card {
       background: white;
       border-radius: 12px;
@@ -520,6 +536,13 @@
       color: white;
     }
 
+    .sidebar-list button.partial {
+      background: #cfe6e6;
+      border-left-color: #2d7a7a;
+      font-weight: 600;
+      color: #2d7a7a;
+    }
+
     .content-wrapper {
       flex: 1;
     }
@@ -594,7 +617,7 @@
 
     <div class="main-wrapper" id="mainWrapper" style="display: none;">
       <div class="sidebar">
-        <div class="sidebar-title">Products</div>
+        <div class="sidebar-title">Rooms</div>
         <ul class="sidebar-list" id="sidebarList"></ul>
       </div>
       <div class="content-wrapper">
@@ -616,6 +639,24 @@
     let selectedProducts = {}; // Track multiple selections for samples
     let selectedForCost = {}; // Track which option is used for cost calculation (one per group)
     let currentProject = null;
+    let roomIndexMap = [];
+
+    // Returns the room name for a product, or 'Unassigned' when blank
+    function getRoomName(product) {
+      let room = getFieldValue(product, 'Room (from Competitor\'s Products)');
+      if (Array.isArray(room)) room = room.filter(Boolean).join(', ');
+      room = (room === null || room === undefined) ? '' : String(room).trim();
+      return room || 'Unassigned';
+    }
+
+    // Alphabetical, with 'Unassigned' always last
+    function sortRoomNames(names) {
+      return names.slice().sort((a, b) => {
+        if (a === 'Unassigned') return 1;
+        if (b === 'Unassigned') return -1;
+        return a.localeCompare(b);
+      });
+    }
 
     // Get project from URL parameter
     const urlParams = new URLSearchParams(window.location.search);
@@ -740,8 +781,32 @@
       // Sort groups alphabetically
       const sortedGroupNames = Object.keys(groupedProducts).sort();
 
-      // Create cards for each group
+      // Group the cards by room
+      const roomGroups = {};
       sortedGroupNames.forEach(groupName => {
+        const roomName = getRoomName(groupedProducts[groupName][0].product);
+        if (!roomGroups[roomName]) roomGroups[roomName] = [];
+        roomGroups[roomName].push(groupName);
+      });
+
+      const roomNames = sortRoomNames(Object.keys(roomGroups));
+      roomIndexMap = roomNames.map(roomName => ({
+        roomName: roomName,
+        groupNames: roomGroups[roomName]
+      }));
+
+      // Create a section per room, then the cards inside it
+      roomNames.forEach((roomName, roomIdx) => {
+        const section = document.createElement('div');
+        section.className = 'room-section';
+        section.id = `room-section-${roomIdx}`;
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.className = 'room-section-title';
+        sectionTitle.textContent = roomName;
+        section.appendChild(sectionTitle);
+
+      roomGroups[roomName].forEach(groupName => {
         const options = groupedProducts[groupName];
         const card = document.createElement('div');
         card.className = 'product-card';
@@ -878,31 +943,51 @@
         optionsHtml += `</div>`; // Close options-container
 
         card.innerHTML = optionsHtml;
-        dashboard.appendChild(card);
+        section.appendChild(card);
       });
 
-      // Populate sidebar with product names
-      populateSidebar(sortedGroupNames);
+        dashboard.appendChild(section);
+      });
+
+      // Populate sidebar with room names
+      populateSidebar();
+      updateSidebarSelection();
 
       document.getElementById('mainWrapper').style.display = 'flex';
       document.getElementById('dashboard').style.display = 'flex';
       updateSummary();
     }
 
-    function populateSidebar(productNames) {
+    function populateSidebar() {
       const sidebarList = document.getElementById('sidebarList');
       sidebarList.innerHTML = '';
 
-      productNames.forEach(name => {
+      roomIndexMap.forEach((entry, roomIdx) => {
         const li = document.createElement('li');
         const button = document.createElement('button');
-        button.textContent = name || 'Unknown Product';
-        button.onclick = () => scrollToProduct(name);
+        button.textContent = entry.roomName;
+        button.onclick = () => scrollToRoom(roomIdx);
         button.className = 'sidebar-item';
-        button.setAttribute('data-product', name);
+        button.setAttribute('data-room-index', roomIdx);
         li.appendChild(button);
         sidebarList.appendChild(li);
       });
+    }
+
+    function scrollToRoom(roomIdx) {
+      setTimeout(() => {
+        const section = document.getElementById(`room-section-${roomIdx}`);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          document.querySelectorAll('.sidebar-item').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-room-index') == roomIdx) {
+              btn.classList.add('active');
+            }
+          });
+        }
+      }, 100);
     }
 
     function scrollToProduct(productName) {
@@ -929,15 +1014,23 @@
     }
 
     function updateSidebarSelection() {
-      // Update all sidebar items to reflect selection status
+      // Update all sidebar rooms to reflect selection status
       document.querySelectorAll('.sidebar-item').forEach(btn => {
-        const productName = btn.getAttribute('data-product');
-        const isSelected = selectedProducts[productName] && selectedProducts[productName].length > 0;
+        const roomIdx = parseInt(btn.getAttribute('data-room-index'), 10);
+        const entry = roomIndexMap[roomIdx];
 
-        if (isSelected) {
+        btn.classList.remove('selected', 'partial');
+        if (!entry) return;
+
+        const total = entry.groupNames.length;
+        const done = entry.groupNames.filter(groupName =>
+          selectedProducts[groupName] && selectedProducts[groupName].length > 0
+        ).length;
+
+        if (total > 0 && done === total) {
           btn.classList.add('selected');
-        } else {
-          btn.classList.remove('selected');
+        } else if (done > 0) {
+          btn.classList.add('partial');
         }
       });
     }
