@@ -857,26 +857,7 @@
     function renderDashboard() {
       let html = `<div class="dashboard">`;
 
-      let roomSidebarHtml = '';
-      let uniqueRooms = new Set();
-      let roomToFirstProductIndex = {};
-
-      // Extract unique rooms and map to first product index
-      Object.entries(groupedProducts).forEach(([groupName, options]) => {
-        options.forEach(({ product, index }) => {
-          const room = getFieldValue(product, 'Room (from Competitor\'s Products)') || 'No Room';
-          uniqueRooms.add(room);
-          if (!roomToFirstProductIndex[room]) {
-            roomToFirstProductIndex[room] = index;
-          }
-        });
-      });
-
-      // Sort rooms alphabetically and create sidebar HTML
-      const sortedRooms = Array.from(uniqueRooms).sort();
-      sortedRooms.forEach(room => {
-        roomSidebarHtml += `<li><button class="sidebar-item" data-room="${room}" onclick="scrollToRoom('${room}')">${room}</button></li>`;
-      });
+      let productSidebarHtml = '';
 
       Object.entries(groupedProducts).forEach(([groupName, options]) => {
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
@@ -891,6 +872,7 @@
 
         options.forEach(({ product, index }) => {
           const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown Product';
+          productSidebarHtml += `<li><button class="sidebar-item" data-product-index="${index}" onclick="scrollToProduct(${index})">${productName}</button></li>`;
 
           const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
           const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
@@ -1023,33 +1005,7 @@
       </div>`;
 
       document.getElementById('dashboardContent').innerHTML = html;
-      document.getElementById('sidebarList').innerHTML = roomSidebarHtml;
-    }
-
-    function scrollToRoom(room) {
-      setTimeout(() => {
-        // Find first product with this room
-        const options = Object.values(groupedProducts).flat();
-        const productWithRoom = options.find(o => {
-          const productRoom = getFieldValue(o.product, 'Room (from Competitor\'s Products)') || 'No Room';
-          return productRoom === room;
-        });
-
-        if (productWithRoom) {
-          const productElement = document.getElementById(`product-${productWithRoom.index}`);
-          if (productElement) {
-            productElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }
-
-        // Update active state in sidebar
-        document.querySelectorAll('.sidebar-item').forEach(btn => {
-          btn.classList.remove('active');
-          if (btn.getAttribute('data-room') === room) {
-            btn.classList.add('active');
-          }
-        });
-      }, 100);
+      document.getElementById('sidebarList').innerHTML = productSidebarHtml;
     }
 
     function scrollToProduct(index) {
