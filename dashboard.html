@@ -76,13 +76,21 @@
     .project-selector {
       display: flex;
       gap: 20px;
+      align-items: flex-start;
+    }
+
+    .project-selector-controls {
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      gap: 12px;
     }
 
     .project-selector label {
       font-weight: 500;
       color: #e0e0e0;
       font-size: 15px;
+      padding-top: 13px;
     }
 
     .project-selector select {
@@ -602,13 +610,12 @@
       </div>
       <div class="project-selector">
         <label for="projectSelect">Select Project:</label>
-        <select id="projectSelect" onchange="changeProject()">
-          <option value="">-- Choose a project --</option>
-        </select>
-      </div>
-      <div class="header-actions">
-        <button class="action-btn" onclick="exportPDF()">Export PDF</button>
-        <button class="action-btn" onclick="generateShareLink()">Share Project</button>
+        <div class="project-selector-controls">
+          <select id="projectSelect" onchange="changeProject()">
+            <option value="">-- Choose a project --</option>
+          </select>
+          <button class="action-btn" onclick="generateShareLink()">Share Project</button>
+        </div>
       </div>
     </div>
 
