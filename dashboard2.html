@@ -606,6 +606,58 @@
       margin-bottom: 50px;
     }
 
+    .summary {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .summary h2 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      color: #1a1a1a;
+      font-weight: 400;
+      letter-spacing: -0.3px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 15px;
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      color: #666;
+      font-weight: 400;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 0;
+      margin-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .total-savings {
+      color: #2d7a7a;
+    }
+
     .room-section {
       display: flex;
       flex-direction: column;
@@ -774,6 +826,10 @@
       </div>
       <div class="content-wrapper">
         <div id="dashboardContent"></div>
+        <div class="summary" id="summary" style="display: none;">
+          <h2>Project Summary</h2>
+          <div id="summaryContent"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -858,15 +914,84 @@
       });
     }
 
-    async function loadDashboard() {
+    async function fetchProjects() {
       const params = new URLSearchParams(window.location.search);
       currentEmail = params.get('email');
-      currentProject = params.get('project');
+      const urlProject = params.get('project');
 
-      if (!currentEmail || !currentProject) {
-        document.getElementById('dashboardContent').innerHTML = '<div class="error">Missing email or project parameters</div>';
+      if (!currentEmail) {
+        document.getElementById('dashboardContent').innerHTML = '<div class="error">Please login with your email first.</div>';
         return;
       }
+
+      // Fetch ONLY this client's projects (filtered by email).
+      // A failure here must not stop a project supplied in the URL from loading.
+      try {
+        const response = await fetch(`${API_URL}/client-projects?email=${encodeURIComponent(currentEmail)}`);
+        if (!response.ok) throw new Error('Failed to fetch projects');
+
+        const projects = await response.json();
+        populateProjectDropdown(projects);
+      } catch (error) {
+        console.error('Error loading project list:', error);
+        if (!urlProject) {
+          document.getElementById('dashboardContent').innerHTML = `<div class="error">Error loading projects: ${error.message}</div>`;
+          return;
+        }
+      }
+
+      // If a project is in the URL, preselect it and load its products
+      if (urlProject) {
+        selectProjectInDropdown(urlProject);
+        loadDashboard(urlProject);
+      }
+    }
+
+    function populateProjectDropdown(projects) {
+      const select = document.getElementById('projectSelect');
+
+      projects.forEach(project => {
+        const option = document.createElement('option');
+        const projectName = typeof project === 'string' ? project : project.name;
+        option.value = projectName;
+        option.textContent = projectName;
+        select.appendChild(option);
+      });
+    }
+
+    // Select a project in the dropdown, adding it if the list didn't include it
+    function selectProjectInDropdown(projectName) {
+      const select = document.getElementById('projectSelect');
+      const exists = Array.from(select.options).some(opt => opt.value === projectName);
+
+      if (!exists) {
+        const option = document.createElement('option');
+        option.value = projectName;
+        option.textContent = projectName;
+        select.appendChild(option);
+      }
+
+      select.value = projectName;
+    }
+
+    function changeProject() {
+      const selectedProject = document.getElementById('projectSelect').value;
+
+      if (selectedProject) {
+        loadDashboard(selectedProject);
+
+        // Keep the email in the URL so a refresh still authenticates
+        const query = currentEmail
+          ? `?email=${encodeURIComponent(currentEmail)}&project=${encodeURIComponent(selectedProject)}`
+          : `?project=${encodeURIComponent(selectedProject)}`;
+        window.history.pushState({}, '', query);
+      }
+    }
+
+    async function loadDashboard(projectName) {
+      currentProject = projectName;
+      selectedProducts = {};
+      costSelection = {};
 
       // Update page title with project name
       document.getElementById('pageTitle').textContent = currentProject;
@@ -1062,15 +1187,12 @@
           </div>`;
       });
 
-      html += `
-        <div class="action-buttons">
-          <button class="btn btn-primary" onclick="downloadAndSubmit()">Generate PDF & Submit</button>
-        </div>
-      </div>`;
+      html += `</div>`;
 
       document.getElementById('dashboardContent').innerHTML = html;
       document.getElementById('sidebarList').innerHTML = productSidebarHtml;
       updateSidebarSelection();
+      updateSummary();
     }
 
     function scrollToRoom(roomIdx) {
@@ -1120,6 +1242,131 @@
 
       renderDashboard();
       updateSidebarSelection();
+      updateSummary();
+    }
+
+    function setOptionForCost(groupName, index) {
+      costSelection[groupName] = index;
+      updateSummary();
+    }
+
+    // Look up a product record by its index
+    function getProductByIndex(index) {
+      const options = Object.values(groupedProducts).flat();
+      const option = options.find(o => o.index === index);
+      return option ? option.product : null;
+    }
+
+    function updateSummary() {
+      const summary = document.getElementById('summary');
+      const summaryContent = document.getElementById('summaryContent');
+      if (!summary || !summaryContent) return;
+
+      let totalYourPrice = 0;
+      let totalBudgetPrice = 0;
+      let selectedCount = 0;
+      let selectedItems = [];
+      let costSelectionItems = {};
+
+      // Collect all samples
+      Object.keys(selectedProducts).forEach(groupName => {
+        const selectedIndices = selectedProducts[groupName];
+        costSelectionItems[groupName] = selectedIndices;
+
+        selectedIndices.forEach(index => {
+          const product = getProductByIndex(index);
+          const productName = product ? (getFieldValue(product, 'My Product Suggestion') || 'Unknown') : 'Unknown';
+          selectedCount++;
+          selectedItems.push({
+            groupName: groupName,
+            name: productName,
+            index: index
+          });
+        });
+      });
+
+      // Calculate totals based on costSelection (one option per group)
+      Object.keys(costSelectionItems).forEach(groupName => {
+        const costIndex = costSelection[groupName];
+        const indexToUse = costIndex !== undefined ? costIndex : costSelectionItems[groupName][0];
+
+        const product = getProductByIndex(indexToUse);
+        if (!product) return;
+
+        const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
+        const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
+        const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
+
+        totalYourPrice += myPrice * quantity;
+        totalBudgetPrice += budgetPrice * quantity;
+      });
+
+      const totalSavings = totalBudgetPrice - totalYourPrice;
+      const savingsPercent = totalBudgetPrice > 0 ? (totalSavings / totalBudgetPrice * 100).toFixed(1) : 0;
+
+      let html = '<div class="summary-row"><span class="summary-label">Samples to Order:</span><span class="summary-value">' + selectedCount + '</span></div>';
+
+      selectedItems.forEach(item => {
+        html += `
+          <div class="summary-row" style="padding-left: 20px; font-size: 13px;">
+            <span class="summary-label">${item.groupName} - ${item.name}</span>
+          </div>
+        `;
+      });
+
+      html += '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #2d7a7a;"><div class="summary-label" style="margin-bottom: 15px; font-weight: 600; color: #1a1a1a;">Choose option for project total:</div>';
+
+      // Show cost selection options (only if multiple options)
+      Object.keys(costSelectionItems).forEach(groupName => {
+        const selectedIndices = costSelectionItems[groupName];
+
+        if (selectedIndices.length > 1) {
+          html += `<div style="margin-bottom: 18px;"><div style="font-weight: 500; margin-bottom: 10px; color: #2d7a7a;">${groupName}</div>`;
+
+          selectedIndices.forEach(index => {
+            const product = getProductByIndex(index);
+            const productName = product ? (getFieldValue(product, 'My Product Suggestion') || 'Unknown') : 'Unknown';
+            const myPrice = product ? (parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0) : 0;
+            const isSelected = costSelection[groupName] === index;
+
+            html += `
+              <div style="margin-left: 10px; margin-bottom: 8px;">
+                <input type="radio" id="cost-option-${index}" name="cost-${groupName}" value="${index}" ${isSelected ? 'checked' : ''} onchange="setOptionForCost('${groupName}', ${index})">
+                <label for="cost-option-${index}" style="margin-left: 8px; cursor: pointer; color: #333;">${productName} - $${myPrice.toFixed(2)}</label>
+              </div>
+            `;
+          });
+          html += '</div>';
+        } else if (selectedIndices.length === 1 && costSelection[groupName] === undefined) {
+          // Auto-select if only one option
+          costSelection[groupName] = selectedIndices[0];
+        }
+      });
+
+      html += '</div>';
+
+      html += `
+        <div class="total-row">
+          <span>Total with Your Products:</span>
+          <span>$${totalYourPrice.toFixed(2)}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Total Budgeted:</span>
+          <span class="summary-value">$${totalBudgetPrice.toFixed(2)}</span>
+        </div>
+        <div class="total-row">
+          <span>Total Project Savings:</span>
+          <span class="total-savings">$${totalSavings.toFixed(2)} (${savingsPercent}%)</span>
+        </div>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+          <button onclick="downloadAndSubmit()" style="background: #2d7a7a; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; width: 100%; transition: all 0.2s;">
+            📥 Download Summary & Submit
+          </button>
+        </div>
+      `;
+
+      summaryContent.innerHTML = html;
+      summary.style.display = selectedCount > 0 ? 'block' : 'none';
     }
 
     function updateSidebarSelection() {
@@ -1257,7 +1504,7 @@
       }
     }
 
-    loadDashboard();
+    fetchProjects();
 
     // Export to PDF
     function exportPDF() {
