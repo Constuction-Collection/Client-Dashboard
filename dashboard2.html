@@ -421,6 +421,24 @@
       border-radius: 8px;
     }
 
+    .client-notes-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      transition: all 0.2s ease;
+    }
+
+    .client-notes-textarea:focus {
+      outline: none;
+      border-color: #2d7a7a;
+      box-shadow: 0 0 0 3px rgba(45, 122, 122, 0.1);
+    }
+
     .pricing-section {
       background: #f9fafb;
       border-left: 3px solid #2d7a7a;
@@ -934,6 +952,16 @@
                   </div>
                 ` : ''}
 
+                <div class="notes-section">
+                  <div class="section-label">Your Notes</div>
+                  <textarea
+                    id="clientNotes-${index}"
+                    class="client-notes-textarea"
+                    placeholder="Add your notes here..."
+                    onblur="saveClientNotes(${index}, '${groupName}')"
+                  ></textarea>
+                </div>
+
                 <div class="pricing-section">
                   <div class="section-label">Pricing</div>
                   <div class="price-row">
@@ -1085,6 +1113,39 @@
         console.error('Error:', error);
         alert('Error: ' + error.message);
       }
+    }
+
+    // Save client notes
+    function saveClientNotes(index, groupName) {
+      const textarea = document.getElementById(`clientNotes-${index}`);
+      if (!textarea) return;
+
+      const notes = textarea.value.trim();
+      const options = Object.values(groupedProducts).flat();
+      const option = options.find(o => options.indexOf(o) === index);
+      if (!option) return;
+
+      const product = option.product;
+      const productRecordId = product.id;
+      const email = new URLSearchParams(window.location.search).get('email');
+
+      fetch(`${API_URL}/save-product-notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          projectName: currentProject,
+          productRecordId: productRecordId,
+          clientNotes: notes
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          console.error('Error saving notes:', data.error);
+        }
+      })
+      .catch(err => console.error('Error:', err));
     }
 
     loadDashboard();

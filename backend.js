@@ -650,6 +650,38 @@ app.get('/api/share/:token', async (req, res) => {
   }
 });
 
+// Save client notes for a product
+app.post('/api/save-product-notes', async (req, res) => {
+  try {
+    const { productRecordId, clientNotes } = req.body;
+
+    if (!productRecordId) {
+      return res.status(400).json({ success: false, error: 'Product record ID required' });
+    }
+
+    // Update the "Client Notes" field in the My Product Suggestions table
+    const response = await axios.patch(
+      `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}/${productRecordId}`,
+      {
+        fields: {
+          'Client Notes': clientNotes || ''
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    res.json({ success: true, data: response.data });
+  } catch (error) {
+    console.error('Error saving product notes:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to save notes' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
