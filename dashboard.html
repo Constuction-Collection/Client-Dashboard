@@ -663,39 +663,60 @@
     const urlProject = urlParams.get('project');
 
     async function fetchProjects() {
+      // Check if email is in URL - required for authentication
+      const email = new URLSearchParams(window.location.search).get('email');
+
+      if (!email) {
+        // No email - cannot proceed without authentication
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Please login with your email first.';
+        return;
+      }
+
+      // Fetch ONLY this client's projects (filtered by email).
+      // A failure here must not stop a project supplied in the URL from loading.
       try {
-        // Check if email is in URL - required for authentication
-        const email = new URLSearchParams(window.location.search).get('email');
-
-        if (!email) {
-          // No email - cannot proceed without authentication
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('error').style.display = 'block';
-          document.getElementById('error').textContent = 'Please login with your email first.';
-          return;
-        }
-
-        // If a project is in the URL, skip the dropdown and load products directly
-        if (urlProject) {
-          fetchProductsForProject(urlProject);
-          return;
-        }
-
-        // Fetch ONLY this client's projects (filtered by email)
         const response = await fetch(`${API_URL}/client-projects?email=${encodeURIComponent(email)}`);
         if (!response.ok) throw new Error('Failed to fetch projects');
 
         const projects = await response.json();
         populateProjectDropdown(projects);
-
-        document.getElementById('header').style.display = 'block';
-        document.getElementById('loading').style.display = 'none';
       } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Error loading projects: ' + error.message;
+        console.error('Error loading project list:', error);
+        if (!urlProject) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = 'Error loading projects: ' + error.message;
+          return;
+        }
       }
+
+      document.getElementById('header').style.display = 'block';
+
+      // If a project is in the URL, preselect it and load its products
+      if (urlProject) {
+        selectProjectInDropdown(urlProject);
+        fetchProductsForProject(urlProject);
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    // Select a project in the dropdown, adding it if the list didn't include it
+    function selectProjectInDropdown(projectName) {
+      const select = document.getElementById('projectSelect');
+      const exists = Array.from(select.options).some(opt => opt.value === projectName);
+
+      if (!exists) {
+        const option = document.createElement('option');
+        option.value = projectName;
+        option.textContent = projectName;
+        select.appendChild(option);
+      }
+
+      select.value = projectName;
     }
 
     function populateProjectDropdown(projects) {
@@ -714,7 +735,13 @@
       const selectedProject = projectSelect.value;
       if (selectedProject) {
         fetchProductsForProject(selectedProject);
-        window.history.pushState({}, '', `?project=${encodeURIComponent(selectedProject)}`);
+
+        // Keep the email in the URL so a refresh still authenticates
+        const email = new URLSearchParams(window.location.search).get('email');
+        const query = email
+          ? `?email=${encodeURIComponent(email)}&project=${encodeURIComponent(selectedProject)}`
+          : `?project=${encodeURIComponent(selectedProject)}`;
+        window.history.pushState({}, '', query);
       }
     }
 
