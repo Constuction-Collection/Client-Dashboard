@@ -613,7 +613,7 @@
     }
 
     .room-section-title {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 600;
       color: #2d7a7a;
       text-transform: uppercase;
@@ -881,7 +881,7 @@
         groupedProducts = {};
 
         products.forEach(product => {
-          const groupName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
+          const groupName = getFieldValue(product, 'Competitor_Product_Name_Text') || 'Unknown Group';
           if (!groupedProducts[groupName]) {
             groupedProducts[groupName] = [];
           }
@@ -976,7 +976,7 @@
                     ` : ''}
                   </div>
                   <div>
-                    <div class="image-label">My Product</div>
+                    <div class="image-label">${productName}</div>
                     <div class="image-box" id="myImage-${index}">
                       ${myImages ? `<img src="${getImageUrl(myImages)}" alt="My Product" id="myImg-${index}">` : '<div style="color: #ccc;">No Image</div>'}
                     </div>
