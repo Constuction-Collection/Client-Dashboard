@@ -878,7 +878,8 @@
           const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
           const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
           const room = getFieldValue(product, 'Room (from Competitor\'s Products)') || '';
-          const mySize = getFieldValue(product, 'Size') || '';
+          const mySize = getFieldValue(product, 'My Size') || '';
+          const competitorSize = getFieldValue(product, 'Competitor_Product_Size') || '';
           const myImages = getFieldValue(product, 'My Product Photos');
           const competitorImages = getFieldValue(product, 'Competitor Product Images');
           const myNotes = getFieldValue(product, 'My Notes') || '';
@@ -937,20 +938,20 @@
                   </div>
                 ` : ''}
 
-                ${mySize ? `
+                ${mySize || competitorSize ? `
                   <div class="room-spec">
-                    <div class="section-label">Specified Size</div>
-                    <div style="display: flex; gap: 30px;">
-                      <div style="flex: 1;">${mySize}</div>
-                      <div style="flex: 1;"><span style="color: #666; font-size: 13px;">Quantity:</span> ${quantity}</div>
+                    <div style="display: flex; gap: 0;">
+                      <div style="flex: 1; padding-right: 20px; border-right: 1px solid #e0e0e0;">
+                        <div class="section-label">Specified Size</div>
+                        <div>${competitorSize || ''}</div>
+                      </div>
+                      <div style="flex: 1; padding-left: 20px;">
+                        <div class="section-label">My Size</div>
+                        <div>${mySize || ''}</div>
+                      </div>
                     </div>
                   </div>
-                ` : `
-                  <div class="room-spec">
-                    <div class="section-label">Quantity</div>
-                    <div>${quantity}</div>
-                  </div>
-                `}
+                ` : ''}`
 
                 ${myNotes ? `
                   <div class="notes-section">
