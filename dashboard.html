@@ -167,7 +167,7 @@
 
     .card-header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       font-size: 24px;
       font-weight: 400;
@@ -815,7 +815,6 @@
         const selectedCount = selectedProducts[groupName] ? selectedProducts[groupName].length : 0;
         let optionsHtml = `
           <div class="card-header">
-            <div class="card-header-title">${groupName}</div>
             <div class="option-count-badge">Select from ${optionCount} ${selectedCount > 0 ? `(${selectedCount} selected)` : ''}</div>
           </div>
           <div class="options-container">

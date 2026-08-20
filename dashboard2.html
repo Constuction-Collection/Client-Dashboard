@@ -168,7 +168,7 @@
 
     .card-header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       font-size: 24px;
       font-weight: 400;
@@ -927,7 +927,6 @@
         html += `
           <div class="product-card">
             <div class="card-header">
-              <span>${groupName}</span>
               <span class="option-count-badge">Select from ${options.length}</span>
             </div>
             <div class="options-container" id="options-${groupName}">`;
