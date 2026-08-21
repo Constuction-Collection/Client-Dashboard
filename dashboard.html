@@ -366,6 +366,52 @@
       box-shadow: 0 0 0 3px rgba(45, 122, 122, 0.1);
     }
 
+    .client-photos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .client-photo {
+      width: 80px;
+      height: 80px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fafaf9;
+    }
+
+    .client-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .client-photo-upload {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 18px;
+      background: #2d7a7a;
+      color: white;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .client-photo-upload:hover {
+      background: #245f5f;
+    }
+
+    .client-photo-status {
+      display: inline-block;
+      margin-left: 12px;
+      font-size: 13px;
+      color: #666;
+    }
+
     .section-label {
       font-size: 11px;
       font-weight: 600;
@@ -870,6 +916,7 @@
           const competitorSize = getFieldValue(product, 'Competitor_Product_Size') || '';
           const competitorNotes = getFieldValue(product, 'Competitor_Product_Notes') || '';
           const myNotes = getFieldValue(product, 'My Notes') || '';
+          const clientPhotos = getFieldValue(product, 'Client Photos') || [];
           const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
 
           const isSelected = selectedProducts[groupName] && selectedProducts[groupName].includes(index);
@@ -945,6 +992,14 @@
                   placeholder="Add your notes here..."
                   onblur="saveClientNotes(${index}, '${groupName}')"
                 ></textarea>
+
+                <div class="client-photos" id="clientPhotos-${index}">${renderClientPhotos(clientPhotos)}</div>
+
+                <label class="client-photo-upload">
+                  Add Photos
+                  <input type="file" accept="image/*" multiple style="display: none;" onchange="uploadClientPhotos(event, ${index})">
+                </label>
+                <span class="client-photo-status" id="clientPhotoStatus-${index}"></span>
               </div>
 
               <div class="pricing">
@@ -1324,6 +1379,119 @@
       }
     }
 
+
+    // ---- Client photo uploads ----
+
+    function renderClientPhotos(photos) {
+      if (!photos || !photos.length) return '';
+      return photos.map(p => `
+        <div class="client-photo">
+          <a href="${p.url}" target="_blank" rel="noopener">
+            <img src="${(p.thumbnails && p.thumbnails.large && p.thumbnails.large.url) || p.url}" alt="${p.filename || 'Client photo'}">
+          </a>
+        </div>
+      `).join('');
+    }
+
+    // Shrink a photo in the browser before upload - phone photos are often
+    // larger than Airtable's 5MB per-file limit
+    function resizeImage(file, maxDimension) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          const img = new Image();
+
+          img.onload = () => {
+            let { width, height } = img;
+
+            if (width > maxDimension || height > maxDimension) {
+              const scale = maxDimension / Math.max(width, height);
+              width = Math.round(width * scale);
+              height = Math.round(height * scale);
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            resolve(dataUrl.split(',')[1]);
+          };
+
+          img.onerror = () => reject(new Error('Could not read image'));
+          img.src = reader.result;
+        };
+
+        reader.onerror = () => reject(new Error('Could not read file'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadClientPhotos(event, index) {
+      const input = event.target;
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+
+      const status = document.getElementById(`clientPhotoStatus-${index}`);
+      const product = getProductForUpload(index);
+
+      if (!product) {
+        if (status) status.textContent = 'Could not find this product.';
+        input.value = '';
+        return;
+      }
+
+      let uploaded = 0;
+      let latestPhotos = null;
+
+      for (const file of files) {
+        if (status) status.textContent = `Uploading ${uploaded + 1} of ${files.length}...`;
+
+        try {
+          const base64 = await resizeImage(file, 1600);
+
+          const response = await fetch(`${API_URL}/upload-product-photo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productRecordId: product.id,
+              filename: file.name || 'client-photo.jpg',
+              contentType: 'image/jpeg',
+              file: base64
+            })
+          });
+
+          const data = await response.json();
+
+          if (!data.success) throw new Error(data.error || 'Upload failed');
+
+          latestPhotos = data.photos;
+          uploaded++;
+        } catch (error) {
+          console.error('Error uploading photo:', error);
+          if (status) status.textContent = `Upload failed: ${error.message}`;
+          input.value = '';
+          return;
+        }
+      }
+
+      // Keep the local record in step so a re-render still shows the photos
+      if (latestPhotos) {
+        product.fields['Client Photos'] = latestPhotos;
+        const container = document.getElementById(`clientPhotos-${index}`);
+        if (container) container.innerHTML = renderClientPhotos(latestPhotos);
+      }
+
+      if (status) status.textContent = `${uploaded} photo${uploaded === 1 ? '' : 's'} added`;
+      input.value = '';
+    }
+
+    function getProductForUpload(index) {
+      return allProducts[index] || null;
+    }
+
     // Save client notes
     function saveClientNotes(index, groupName) {
       const textarea = document.getElementById(`clientNotes-${index}`);
@@ -1357,20 +1525,6 @@
 
     // Fetch projects on page load
     fetchProjects();
-
-    // Export to PDF
-    function exportPDF() {
-      const projectName = document.getElementById('projectSelect').value;
-      if (!projectName) {
-        alert('Please select a project first');
-        return;
-      }
-
-      const params = new URLSearchParams(window.location.search);
-      const email = params.get('email');
-
-      window.location.href = `/api/generate-summary?email=${encodeURIComponent(email)}&project=${encodeURIComponent(projectName)}&excludePricing=true`;
-    }
 
     // Generate share link
     function generateShareLink() {
