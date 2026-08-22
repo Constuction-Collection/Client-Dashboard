@@ -854,6 +854,7 @@
         if (!response.ok) throw new Error('Failed to fetch products');
 
         allProducts = await response.json();
+        restoreSavedState();
 
         // If project was passed via URL, show a simple title instead of the dropdown
         if (urlProject) {
@@ -963,6 +964,7 @@
           const competitorNotes = getFieldValue(product, 'Competitor_Product_Notes') || '';
           const myNotes = getFieldValue(product, 'My Notes') || '';
           const clientPhotos = getFieldValue(product, 'Client Photos') || [];
+          const clientNotes = getFieldValue(product, 'Client Notes') || '';
           const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
           const uom = (getFieldValue(product, 'Competitor_Product_UOM') || '').toString().trim();
           const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
@@ -1042,7 +1044,7 @@
                   class="client-notes-textarea"
                   placeholder="Add your notes here..."
                   onblur="saveClientNotes(${index}, '${groupName}')"
-                ></textarea>
+                >${clientNotes}</textarea>
 
                 <div class="client-photos" id="clientPhotos-${index}">${renderClientPhotos(clientPhotos)}</div>
 
@@ -1188,6 +1190,25 @@
       });
     }
 
+    // Rebuild the client's saved selections from Airtable
+    function restoreSavedState() {
+      selectedProducts = {};
+      selectedForCost = {};
+
+      allProducts.forEach((product, index) => {
+        const groupName = product.fields['Competitor_Product_Name_Text'] || 'Unknown Group';
+
+        if (product.fields['Client Selected']) {
+          if (!selectedProducts[groupName]) selectedProducts[groupName] = [];
+          selectedProducts[groupName].push(index);
+        }
+
+        if (product.fields['Use For Total']) {
+          selectedForCost[groupName] = index;
+        }
+      });
+    }
+
     function toggleProduct(index, groupName) {
       // Initialize as array if not exists
       if (!selectedProducts[groupName]) {
@@ -1196,6 +1217,7 @@
 
       const selectedArray = selectedProducts[groupName];
       const indexPosition = selectedArray.indexOf(index);
+      const nowSelected = indexPosition === -1;
 
       if (indexPosition > -1) {
         // Already selected - remove it
@@ -1210,14 +1232,60 @@
         delete selectedProducts[groupName];
       }
 
+      saveSelection(index, groupName, nowSelected);
+
       renderDashboard();
       updateSummary();
       updateSidebarSelection();
     }
 
+    // Write a selection straight to Airtable
+    function saveSelection(index, groupName, selected) {
+      const product = allProducts[index];
+      if (!product) return;
+
+      fetch(`${API_URL}/save-selection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productRecordId: product.id,
+          selected: selected,
+          project: currentProject,
+          productName: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
+          groupName: groupName
+        })
+      })
+      .then(res => res.json())
+      .then(data => { if (!data.success) console.error('Error saving selection:', data.error); })
+      .catch(err => console.error('Error:', err));
+    }
+
     function setOptionForCost(groupName, index) {
       selectedForCost[groupName] = index;
       updateSummary();
+
+      const chosen = allProducts[index];
+      if (!chosen) return;
+
+      const others = (selectedProducts[groupName] || [])
+        .map(i => allProducts[i])
+        .filter(Boolean)
+        .map(p => p.id);
+
+      fetch(`${API_URL}/save-cost-option`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chosenRecordId: chosen.id,
+          otherRecordIds: others,
+          project: currentProject,
+          productName: getFieldValue(chosen, 'My Product Suggestion') || 'Unknown',
+          groupName: groupName
+        })
+      })
+      .then(res => res.json())
+      .then(data => { if (!data.success) console.error('Error saving cost option:', data.error); })
+      .catch(err => console.error('Error:', err));
     }
 
     function updateSummary() {
@@ -1421,6 +1489,12 @@
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
 
+          await fetch(`${API_URL}/mark-submitted`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project: currentProject })
+          }).catch(err => console.error('Error marking submitted:', err));
+
           alert('✅ Summary downloaded and submitted! Check your email for confirmation.');
         } else {
           alert('❌ Error generating summary. Please try again.');
@@ -1551,7 +1625,10 @@
               productRecordId: product.id,
               filename: file.name || 'client-photo.jpg',
               contentType: 'image/jpeg',
-              file: base64
+              file: base64,
+              projectName: currentProject,
+              productName: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
+              groupName: getFieldValue(product, 'Competitor_Product_Name_Text') || 'Unknown'
             })
           });
 
@@ -1603,7 +1680,9 @@
           email: email,
           projectName: currentProject,
           productRecordId: productRecordId,
-          clientNotes: notes
+          clientNotes: notes,
+          productName: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
+          groupName: groupName
         })
       })
       .then(res => res.json())

@@ -656,7 +656,7 @@ app.get('/api/share/:token', async (req, res) => {
 // Save client notes for a product
 app.post('/api/save-product-notes', async (req, res) => {
   try {
-    const { productRecordId, clientNotes } = req.body;
+    const { productRecordId, clientNotes, projectName, productName, groupName } = req.body;
 
     if (!productRecordId) {
       return res.status(400).json({ success: false, error: 'Product record ID required' });
@@ -678,6 +678,11 @@ app.post('/api/save-product-notes', async (req, res) => {
       }
     );
 
+    await logProjectChange(
+      projectName,
+      `Note changed: ${groupName || 'Unknown'} → ${productName || 'Unknown'}`
+    );
+
     res.json({ success: true, data: response.data });
   } catch (error) {
     console.error('Error saving product notes:', error.message);
@@ -688,7 +693,7 @@ app.post('/api/save-product-notes', async (req, res) => {
 // Client photo upload - appends to the "Client Photos" attachment field
 app.post('/api/upload-product-photo', async (req, res) => {
   try {
-    const { productRecordId, filename, contentType, file } = req.body;
+    const { productRecordId, filename, contentType, file, projectName, productName, groupName } = req.body;
 
     if (!productRecordId || !file) {
       return res.status(400).json({ success: false, error: 'Product record ID and file are required' });
@@ -718,11 +723,194 @@ app.post('/api/upload-product-photo', async (req, res) => {
       }
     );
 
+    await logProjectChange(
+      projectName,
+      `Photo added: ${groupName || 'Unknown'} → ${productName || 'Unknown'}`
+    );
+
     res.json({ success: true, photos: record.data.fields['Client Photos'] || [] });
 
   } catch (error) {
     console.error('Error uploading client photo:', error.response?.data || error.message);
     res.status(500).json({ success: false, error: 'Failed to upload photo' });
+  }
+});
+
+// ---------------------------------------------------------------
+// Client activity tracking
+// ---------------------------------------------------------------
+
+// Find a project record by its name
+async function findProjectRecord(projectName) {
+  if (!projectName) return null;
+
+  const escaped = String(projectName).replace(/"/g, '\\"');
+  const response = await axios.get(
+    `https://api.airtable.com/v0/${BASE_ID}/${PROJECTS_TABLE_ID}`,
+    {
+      headers: { 'Authorization': `Bearer ${AIRTABLE_API_TOKEN}` },
+      params: { filterByFormula: `{Project Name} = "${escaped}"` }
+    }
+  );
+
+  return response.data.records[0] || null;
+}
+
+function formatLogTime(date) {
+  return date.toLocaleString('en-AU', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: 'Australia/Sydney'
+  });
+}
+
+// Append a line to the project's Change Log and stamp Client Last Changed.
+// Never throws - logging must not break the action that triggered it.
+async function logProjectChange(projectName, line) {
+  try {
+    const project = await findProjectRecord(projectName);
+    if (!project) {
+      console.warn(`Change log: no project found named "${projectName}"`);
+      return;
+    }
+
+    const now = new Date();
+    const existing = project.fields['Change Log'] || '';
+    const entry = `${formatLogTime(now)}  ${line}`;
+    const updated = existing ? `${existing}\n${entry}` : entry;
+
+    await axios.patch(
+      `https://api.airtable.com/v0/${BASE_ID}/${PROJECTS_TABLE_ID}/${project.id}`,
+      {
+        fields: {
+          'Change Log': updated,
+          'Client Last Changed': now.toISOString()
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Error writing change log:', error.response?.data || error.message);
+  }
+}
+
+// Select / unselect a product option
+app.post('/api/save-selection', async (req, res) => {
+  try {
+    const { productRecordId, selected, project, productName, groupName } = req.body;
+
+    if (!productRecordId) {
+      return res.status(400).json({ success: false, error: 'Product record ID required' });
+    }
+
+    const fields = { 'Client Selected': !!selected };
+    // Unselecting also gives up its claim on the project total
+    if (!selected) fields['Use For Total'] = false;
+
+    await axios.patch(
+      `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}/${productRecordId}`,
+      { fields },
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    await logProjectChange(
+      project,
+      `${selected ? 'Selected' : 'Unselected'}: ${groupName || 'Unknown'} → ${productName || 'Unknown'}`
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving selection:', error.response?.data || error.message);
+    res.status(500).json({ success: false, error: 'Failed to save selection' });
+  }
+});
+
+// Choose which selected option is priced into the project total
+app.post('/api/save-cost-option', async (req, res) => {
+  try {
+    const { chosenRecordId, otherRecordIds, project, productName, groupName } = req.body;
+
+    if (!chosenRecordId) {
+      return res.status(400).json({ success: false, error: 'Chosen record ID required' });
+    }
+
+    const updates = [{ id: chosenRecordId, fields: { 'Use For Total': true } }];
+    (otherRecordIds || []).forEach(id => {
+      if (id !== chosenRecordId) updates.push({ id, fields: { 'Use For Total': false } });
+    });
+
+    // Airtable accepts up to 10 records per PATCH
+    for (let i = 0; i < updates.length; i += 10) {
+      await axios.patch(
+        `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`,
+        { records: updates.slice(i, i + 10) },
+        {
+          headers: {
+            'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
+
+    await logProjectChange(
+      project,
+      `Priced for total: ${groupName || 'Unknown'} → ${productName || 'Unknown'}`
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving cost option:', error.response?.data || error.message);
+    res.status(500).json({ success: false, error: 'Failed to save cost option' });
+  }
+});
+
+// Stamp the project as submitted
+app.post('/api/mark-submitted', async (req, res) => {
+  try {
+    const { project } = req.body;
+
+    const projectRecord = await findProjectRecord(project);
+    if (!projectRecord) {
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
+
+    const now = new Date();
+    const existing = projectRecord.fields['Change Log'] || '';
+    const marker = `=== SUBMITTED ${formatLogTime(now)} ===`;
+    const updated = existing ? `${existing}\n${marker}` : marker;
+
+    await axios.patch(
+      `https://api.airtable.com/v0/${BASE_ID}/${PROJECTS_TABLE_ID}/${projectRecord.id}`,
+      {
+        fields: {
+          'Client Submitted': now.toISOString(),
+          'Client Last Changed': now.toISOString(),
+          'Change Log': updated
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking submitted:', error.response?.data || error.message);
+    res.status(500).json({ success: false, error: 'Failed to mark submitted' });
   }
 });
 

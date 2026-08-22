@@ -983,6 +983,7 @@
           groupedProducts[groupName].push({ product, index: products.indexOf(product) });
         });
 
+        restoreSavedState(products);
         renderDashboard();
       } catch (error) {
         console.error('Error:', error);
@@ -1040,6 +1041,7 @@
           const competitorImages = getFieldValue(product, 'Competitor Product Images');
           const myNotes = getFieldValue(product, 'My Notes') || '';
           const clientPhotos = getFieldValue(product, 'Client Photos') || [];
+          const clientNotes = getFieldValue(product, 'Client Notes') || '';
 
           const totalPrice = price * quantity;
           const budgetTotal = budgetPrice * quantity;
@@ -1127,7 +1129,7 @@
                     class="client-notes-textarea"
                     placeholder="Add your notes here..."
                     onblur="saveClientNotes(${index}, '${groupName}')"
-                  ></textarea>
+                  >${clientNotes}</textarea>
 
                   <div class="client-photos" id="clientPhotos-${index}">${renderClientPhotos(clientPhotos)}</div>
 
@@ -1211,26 +1213,94 @@
       }, 100);
     }
 
+    // Rebuild the client's saved selections from Airtable
+    function restoreSavedState(products) {
+      selectedProducts = {};
+      costSelection = {};
+
+      products.forEach((product, position) => {
+        const index = products.indexOf(product);
+        const groupName = getFieldValue(product, 'Competitor_Product_Name_Text') || 'Unknown Group';
+
+        if (product.fields && product.fields['Client Selected']) {
+          if (!selectedProducts[groupName]) selectedProducts[groupName] = [];
+          selectedProducts[groupName].push(index);
+        }
+
+        if (product.fields && product.fields['Use For Total']) {
+          costSelection[groupName] = index;
+        }
+      });
+    }
+
     function toggleProduct(index, groupName) {
       if (!selectedProducts[groupName]) {
         selectedProducts[groupName] = [];
       }
 
       const position = selectedProducts[groupName].indexOf(index);
+      const nowSelected = position === -1;
+
       if (position > -1) {
         selectedProducts[groupName].splice(position, 1);
       } else {
         selectedProducts[groupName].push(index);
       }
 
+      saveSelection(index, groupName, nowSelected);
+
       renderDashboard();
       updateSidebarSelection();
       updateSummary();
     }
 
+    // Write a selection straight to Airtable
+    function saveSelection(index, groupName, selected) {
+      const product = getProductByIndex(index);
+      if (!product) return;
+
+      fetch(`${API_URL}/save-selection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productRecordId: product.id,
+          selected: selected,
+          project: currentProject,
+          productName: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
+          groupName: groupName
+        })
+      })
+      .then(res => res.json())
+      .then(data => { if (!data.success) console.error('Error saving selection:', data.error); })
+      .catch(err => console.error('Error:', err));
+    }
+
     function setOptionForCost(groupName, index) {
       costSelection[groupName] = index;
       updateSummary();
+
+      const chosen = getProductByIndex(index);
+      if (!chosen) return;
+
+      const others = (selectedProducts[groupName] || [])
+        .map(i => getProductByIndex(i))
+        .filter(Boolean)
+        .map(p => p.id);
+
+      fetch(`${API_URL}/save-cost-option`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chosenRecordId: chosen.id,
+          otherRecordIds: others,
+          project: currentProject,
+          productName: getFieldValue(chosen, 'My Product Suggestion') || 'Unknown',
+          groupName: groupName
+        })
+      })
+      .then(res => res.json())
+      .then(data => { if (!data.success) console.error('Error saving cost option:', data.error); })
+      .catch(err => console.error('Error:', err));
     }
 
     // Look up a product record by its index
@@ -1493,7 +1563,10 @@
               productRecordId: product.id,
               filename: file.name || 'client-photo.jpg',
               contentType: 'image/jpeg',
-              file: base64
+              file: base64,
+              projectName: currentProject,
+              productName: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
+              groupName: getFieldValue(product, 'Competitor_Product_Name_Text') || 'Unknown'
             })
           });
 
@@ -1545,7 +1618,9 @@
           email: currentEmail,
           projectName: currentProject,
           productRecordId: productRecordId,
-          clientNotes: notes
+          clientNotes: notes,
+          productName: getFieldValue(option.product, 'My Product Suggestion') || 'Unknown',
+          groupName: groupName
         })
       })
       .then(res => res.json())
@@ -1596,6 +1671,12 @@
         a.href = url;
         a.download = `${currentProject}-sourcing.pdf`;
         a.click();
+
+        await fetch(`${API_URL}/mark-submitted`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project: currentProject })
+        }).catch(err => console.error('Error marking submitted:', err));
 
         alert('PDF generated and email sent successfully!');
       } catch (error) {
