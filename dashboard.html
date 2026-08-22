@@ -918,6 +918,7 @@
           const myNotes = getFieldValue(product, 'My Notes') || '';
           const clientPhotos = getFieldValue(product, 'Client Photos') || [];
           const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
+          const uom = (getFieldValue(product, 'Competitor_Product_UOM') || '').toString().trim();
           const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
 
           const isSelected = selectedProducts[groupName] && selectedProducts[groupName].includes(index);
@@ -958,7 +959,7 @@
 
               <div class="room-spec">
                 <div class="section-label">Quantity</div>
-                ${quantity}
+                ${quantity}${uom}
               </div>
 
               ${mySize || competitorSize ? `

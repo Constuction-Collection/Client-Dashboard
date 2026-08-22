@@ -973,6 +973,7 @@
           const price = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
           const budgetPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
           const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
+          const uom = (getFieldValue(product, 'Competitor_Product_UOM') || '').toString().trim();
           const room = getFieldValue(product, 'Room (from Competitor\'s Products)') || '';
           const mySize = getFieldValue(product, 'My Size') || '';
           const competitorSize = getFieldValue(product, 'Competitor_Product_Size') || '';
@@ -1037,7 +1038,7 @@
 
                 <div class="room-spec">
                   <div class="section-label">Quantity</div>
-                  <div>${quantity}</div>
+                  <div>${quantity}${uom}</div>
                 </div>
 
                 ${mySize || competitorSize ? `

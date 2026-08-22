@@ -69,6 +69,7 @@ app.get('/api/products', async (req, res) => {
                 return {
                   name: linkedResponse.data.fields['Competitor Product Name'] || 'Unknown Product',
                   quantity: linkedResponse.data.fields['Quantity'] || 1,
+                  uom: linkedResponse.data.fields['UOM'] || '',
                   notes: linkedResponse.data.fields['Notes'] || '',
                   size: linkedResponse.data.fields['Size'] || ''
                 };
@@ -79,6 +80,7 @@ app.get('/api/products', async (req, res) => {
             // Add the product names, quantities, notes, and size to the record (use different field name to avoid conflict with lookup field)
             record.fields['Competitor_Product_Name_Text'] = productData[0].name;
             record.fields['Competitor Product Quantity'] = productData[0].quantity;
+            record.fields['Competitor_Product_UOM'] = productData[0].uom;
             record.fields['Competitor_Product_Notes'] = productData[0].notes;
             record.fields['Competitor_Product_Size'] = productData[0].size;
           } catch (err) {
