@@ -634,7 +634,7 @@ app.get('/api/share/:token', async (req, res) => {
     const products = response.data.records.map(record => ({
       id: record.id,
       productName: record.fields['My Product Suggestion'] || 'Unknown',
-      room: record.fields['Room (from Competitor\'s Products)'] || '',
+      room: record.fields['Room'] || '',
       mySize: record.fields['My Size'] || '',
       competitorSize: record.fields['Competitor_Product_Size'] || '',
       myImages: record.fields['My Product Photos'] || [],

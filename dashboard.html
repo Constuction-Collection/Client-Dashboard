@@ -742,7 +742,7 @@
 
     // Returns the room name for a product, or 'Unassigned' when blank
     function getRoomName(product) {
-      let room = getFieldValue(product, 'Room (from Competitor\'s Products)');
+      let room = getFieldValue(product, 'Room');
       if (Array.isArray(room)) room = room.filter(Boolean).join(', ');
       room = (room === null || room === undefined) ? '' : String(room).trim();
       return room || 'Unassigned';
@@ -957,7 +957,7 @@
           const myImages = getFieldValue(product, 'My Product Photos');
           const competitorImages = getFieldValue(product, 'Competitor Product Images');
           const mySupplier = getFieldValue(product, 'My Supplier') || 'N/A';
-          const roomSpec = getFieldValue(product, 'Room (from Competitor\'s Products)') || '';
+          const roomSpec = getFieldValue(product, 'Room') || '';
           const mySize = getFieldValue(product, 'My Size') || '';
           const competitorSize = getFieldValue(product, 'Competitor_Product_Size') || '';
           const competitorNotes = getFieldValue(product, 'Competitor_Product_Notes') || '';
@@ -1372,7 +1372,7 @@
             quantity: quantity,
             myTotal: myTotal,
           competitorTotal: competitorTotal,
-          room: getFieldValue(product, 'Room (from Competitor\'s Products)') || '',
+          room: getFieldValue(product, 'Room') || '',
           myNotes: getFieldValue(product, 'My Notes') || '',
           competitorNotes: getFieldValue(product, 'Competitor_Product_Notes') || '',
           myImages: getFieldValue(product, 'My Product Photos') || '',
