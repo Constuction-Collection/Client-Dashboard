@@ -917,6 +917,7 @@
           const competitorNotes = getFieldValue(product, 'Competitor_Product_Notes') || '';
           const myNotes = getFieldValue(product, 'My Notes') || '';
           const clientPhotos = getFieldValue(product, 'Client Photos') || [];
+          const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
           const competitorSupplier = getFieldValue(product, 'Competitor Supplier Name') || 'N/A';
 
           const isSelected = selectedProducts[groupName] && selectedProducts[groupName].includes(index);
@@ -954,6 +955,11 @@
                   ${roomSpec}
                 </div>
               ` : ''}
+
+              <div class="room-spec">
+                <div class="section-label">Quantity</div>
+                ${quantity}
+              </div>
 
               ${mySize || competitorSize ? `
                 <div class="room-spec">
@@ -1307,15 +1313,16 @@
           const productName = getFieldValue(product, 'My Product Suggestion') || 'Unknown';
           const myPrice = parseFloat(getFieldValue(product, 'My Retail Price + GST')) || 0;
           const competitorPrice = parseFloat(getFieldValue(product, 'Competitor Quoted Price + GST')) || 0;
-          const myTotal = (myPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
-          const competitorTotal = (competitorPrice * (parseFloat(getFieldValue(product, 'Quantity')) || 1));
+          const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
+          const myTotal = myPrice * quantity;
+          const competitorTotal = competitorPrice * quantity;
 
           selectedData.selectedProducts.push({
             name: productName,
             groupName: groupName,
             myPrice: myPrice,
             competitorPrice: competitorPrice,
-            quantity: parseFloat(getFieldValue(product, 'Quantity')) || 1,
+            quantity: quantity,
             myTotal: myTotal,
           competitorTotal: competitorTotal,
           room: getFieldValue(product, 'Room (from Competitor\'s Products)') || '',
