@@ -412,6 +412,52 @@
       color: #666;
     }
 
+    .image-box img,
+    .client-photo img {
+      cursor: zoom-in;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.85);
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      cursor: zoom-out;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 28px;
+      font-size: 34px;
+      line-height: 1;
+      color: white;
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    .lightbox-close:hover {
+      opacity: 1;
+    }
+
     .section-label {
       font-size: 11px;
       font-weight: 600;
@@ -1388,15 +1434,55 @@
     }
 
 
+
+    // ---- Image lightbox ----
+    // Delegated so it keeps working after every re-render
+    function openLightbox(src) {
+      const box = document.getElementById('lightbox');
+      const img = document.getElementById('lightboxImg');
+      if (!box || !img || !src) return;
+
+      img.src = src;
+      box.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      const box = document.getElementById('lightbox');
+      if (!box) return;
+
+      box.classList.remove('open');
+      document.getElementById('lightboxImg').src = '';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('click', function (event) {
+      const box = document.getElementById('lightbox');
+
+      if (box && box.classList.contains('open')) {
+        closeLightbox();
+        return;
+      }
+
+      const img = event.target.closest ? event.target.closest('.image-box img, .client-photo img') : null;
+      if (img) {
+        openLightbox(img.getAttribute('data-full') || img.src);
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeLightbox();
+    });
+
     // ---- Client photo uploads ----
 
     function renderClientPhotos(photos) {
       if (!photos || !photos.length) return '';
       return photos.map(p => `
         <div class="client-photo">
-          <a href="${p.url}" target="_blank" rel="noopener">
-            <img src="${(p.thumbnails && p.thumbnails.large && p.thumbnails.large.url) || p.url}" alt="${p.filename || 'Client photo'}">
-          </a>
+          <img src="${(p.thumbnails && p.thumbnails.large && p.thumbnails.large.url) || p.url}"
+               data-full="${p.url}"
+               alt="${p.filename || 'Client photo'}">
         </div>
       `).join('');
     }
@@ -1566,5 +1652,10 @@
       .catch(err => alert('Error: ' + err.message));
     }
   </script>
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <img id="lightboxImg" alt="">
+  </div>
+
 </body>
 </html>
