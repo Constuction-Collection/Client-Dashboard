@@ -389,6 +389,36 @@
     }
 
 
+
+    .client-file-wrap {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+    }
+
+    .client-file-remove {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      border: none;
+      border-radius: 50%;
+      background: #b3261e;
+      color: white;
+      font-size: 13px;
+      line-height: 20px;
+      text-align: center;
+      cursor: pointer;
+      padding: 0;
+      opacity: 0.85;
+      z-index: 2;
+    }
+
+    .client-file-remove:hover {
+      opacity: 1;
+    }
+
     .client-file {
       width: 80px;
       height: 80px;
@@ -1086,7 +1116,7 @@
                   onblur="saveClientNotes(${index}, '${groupName}')"
                 >${clientNotes}</textarea>
 
-                <div class="client-photos" id="clientPhotos-${index}">${renderClientFiles(clientFiles)}</div>
+                <div class="client-photos" id="clientPhotos-${index}">${renderClientFiles(clientFiles, index)}</div>
 
                 <label class="client-photo-upload">
                   Add Files
@@ -1588,33 +1618,78 @@
 
     // ---- Client photo uploads ----
 
-    // Images show a thumbnail; anything else gets a labelled file tile
-    function renderClientFiles(files) {
+    // Images show a thumbnail; anything else gets a labelled file tile.
+    // Each tile carries its own remove button - this strip is the only
+    // place a client can delete anything.
+    function renderClientFiles(files, index) {
       if (!files || !files.length) return '';
 
       return files.map(f => {
         const isImage = (f.type || '').startsWith('image/') && f.thumbnails;
+        const name = f.filename || 'file';
 
-        if (isImage) {
-          return `
+        const tile = isImage
+          ? `
             <div class="client-photo">
               <img src="${(f.thumbnails.large && f.thumbnails.large.url) || f.url}"
                    data-full="${f.url}"
-                   alt="${f.filename || 'Client file'}">
+                   alt="${name}">
             </div>
+          `
+          : `
+            <a class="client-file" href="${f.url}" target="_blank" rel="noopener" title="${name}">
+              <span class="client-file-ext">${name.includes('.') ? name.split('.').pop() : 'file'}</span>
+              <span class="client-file-name">${name}</span>
+            </a>
           `;
-        }
-
-        const name = f.filename || 'file';
-        const ext = name.includes('.') ? name.split('.').pop() : 'file';
 
         return `
-          <a class="client-file" href="${f.url}" target="_blank" rel="noopener" title="${name}">
-            <span class="client-file-ext">${ext}</span>
-            <span class="client-file-name">${name}</span>
-          </a>
+          <span class="client-file-wrap">
+            ${tile}
+            <button type="button" class="client-file-remove"
+                    title="Remove ${name}"
+                    onclick="removeClientFile(event, ${index}, '${f.id}')">&times;</button>
+          </span>
         `;
       }).join('');
+    }
+
+    // Delete one file from the Client Files field
+    async function removeClientFile(event, index, attachmentId) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const status = document.getElementById(`clientPhotoStatus-${index}`);
+      const product = getProductForUpload(index);
+      if (!product) return;
+
+      if (status) status.textContent = 'Removing...';
+
+      try {
+        const response = await fetch(`${API_URL}/remove-product-file`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productRecordId: product.id,
+            attachmentId: attachmentId,
+            projectName: currentProject,
+            productName: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
+            groupName: getFieldValue(product, 'Competitor_Product_Name_Text') || 'Unknown'
+          })
+        });
+
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || 'Remove failed');
+
+        product.fields['Client Files'] = data.photos;
+        const container = document.getElementById(`clientPhotos-${index}`);
+        if (container) container.innerHTML = renderClientFiles(data.photos, index);
+
+        if (status) status.textContent = 'File removed';
+      } catch (error) {
+        console.error('Error removing file:', error);
+        if (status) status.textContent = `Remove failed: ${error.message}`;
+      }
     }
 
     // Airtable's upload endpoint rejects anything over 5MB
@@ -1776,7 +1851,7 @@
       if (latestFiles) {
         product.fields['Client Files'] = latestFiles;
         const container = document.getElementById(`clientPhotos-${index}`);
-        if (container) container.innerHTML = renderClientFiles(latestFiles);
+        if (container) container.innerHTML = renderClientFiles(latestFiles, index);
       }
 
       let message = '';

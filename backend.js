@@ -915,6 +915,59 @@ app.post('/api/mark-submitted', async (req, res) => {
   }
 });
 
+// Remove one file from the "Client Files" field.
+// Scoped to that field only - no other attachment field is touched.
+app.post('/api/remove-product-file', async (req, res) => {
+  try {
+    const { productRecordId, attachmentId, projectName, productName, groupName } = req.body;
+
+    if (!productRecordId || !attachmentId) {
+      return res.status(400).json({ success: false, error: 'Product record ID and attachment ID are required' });
+    }
+
+    // Read what's currently there
+    const record = await axios.get(
+      `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}/${productRecordId}`,
+      { headers: { 'Authorization': `Bearer ${AIRTABLE_API_TOKEN}` } }
+    );
+
+    const current = record.data.fields['Client Files'] || [];
+    const removed = current.find(f => f.id === attachmentId);
+
+    if (!removed) {
+      // Already gone - report the current list rather than failing
+      return res.json({ success: true, photos: current });
+    }
+
+    // Airtable keeps an existing attachment when you pass back its id
+    const keep = current
+      .filter(f => f.id !== attachmentId)
+      .map(f => ({ id: f.id }));
+
+    const updated = await axios.patch(
+      `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}/${productRecordId}`,
+      { fields: { 'Client Files': keep } },
+      {
+        headers: {
+          'Authorization': `Bearer ${AIRTABLE_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    await logProjectChange(
+      projectName,
+      `File removed: ${groupName || 'Unknown'} → ${productName || 'Unknown'} (${removed.filename || 'file'})`
+    );
+
+    res.json({ success: true, photos: updated.data.fields['Client Files'] || [] });
+
+  } catch (error) {
+    console.error('Error removing client file:', error.response?.data || error.message);
+    res.status(500).json({ success: false, error: 'Failed to remove file' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
