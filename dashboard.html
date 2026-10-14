@@ -388,6 +388,46 @@
       object-fit: cover;
     }
 
+
+    .client-file {
+      width: 80px;
+      height: 80px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      background: #fafaf9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      text-decoration: none;
+      overflow: hidden;
+    }
+
+    .client-file:hover {
+      border-color: #2d7a7a;
+      background: #f0fafb;
+    }
+
+    .client-file-ext {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2d7a7a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .client-file-name {
+      font-size: 9px;
+      color: #666;
+      text-align: center;
+      margin-top: 4px;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .client-photo-upload {
       display: inline-block;
       margin-top: 12px;
@@ -963,7 +1003,7 @@
           const competitorSize = getFieldValue(product, 'Competitor_Product_Size') || '';
           const competitorNotes = getFieldValue(product, 'Competitor_Product_Notes') || '';
           const myNotes = getFieldValue(product, 'My Notes') || '';
-          const clientPhotos = getFieldValue(product, 'Client Photos') || [];
+          const clientFiles = getFieldValue(product, 'Client Files') || [];
           const clientNotes = getFieldValue(product, 'Client Notes') || '';
           const quantity = parseFloat(getFieldValue(product, 'Competitor Product Quantity')) || 1;
           const uom = (getFieldValue(product, 'Competitor_Product_UOM') || '').toString().trim();
@@ -1046,11 +1086,11 @@
                   onblur="saveClientNotes(${index}, '${groupName}')"
                 >${clientNotes}</textarea>
 
-                <div class="client-photos" id="clientPhotos-${index}">${renderClientPhotos(clientPhotos)}</div>
+                <div class="client-photos" id="clientPhotos-${index}">${renderClientFiles(clientFiles)}</div>
 
                 <label class="client-photo-upload">
-                  Add Photos
-                  <input type="file" accept="image/*" multiple style="display: none;" onchange="uploadClientPhotos(event, ${index})">
+                  Add Files
+                  <input type="file" multiple style="display: none;" onchange="uploadClientFiles(event, ${index})">
                 </label>
                 <span class="client-photo-status" id="clientPhotoStatus-${index}"></span>
               </div>
@@ -1548,15 +1588,78 @@
 
     // ---- Client photo uploads ----
 
-    function renderClientPhotos(photos) {
-      if (!photos || !photos.length) return '';
-      return photos.map(p => `
-        <div class="client-photo">
-          <img src="${(p.thumbnails && p.thumbnails.large && p.thumbnails.large.url) || p.url}"
-               data-full="${p.url}"
-               alt="${p.filename || 'Client photo'}">
-        </div>
-      `).join('');
+    // Images show a thumbnail; anything else gets a labelled file tile
+    function renderClientFiles(files) {
+      if (!files || !files.length) return '';
+
+      return files.map(f => {
+        const isImage = (f.type || '').startsWith('image/') && f.thumbnails;
+
+        if (isImage) {
+          return `
+            <div class="client-photo">
+              <img src="${(f.thumbnails.large && f.thumbnails.large.url) || f.url}"
+                   data-full="${f.url}"
+                   alt="${f.filename || 'Client file'}">
+            </div>
+          `;
+        }
+
+        const name = f.filename || 'file';
+        const ext = name.includes('.') ? name.split('.').pop() : 'file';
+
+        return `
+          <a class="client-file" href="${f.url}" target="_blank" rel="noopener" title="${name}">
+            <span class="client-file-ext">${ext}</span>
+            <span class="client-file-name">${name}</span>
+          </a>
+        `;
+      }).join('');
+    }
+
+    // Airtable's upload endpoint rejects anything over 5MB
+    const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+    // Formats a browser canvas can reliably decode. Everything else -
+    // PDF, Word, Excel, HEIC from iPhones, Pages/Numbers/Keynote - is
+    // sent through untouched.
+    function isResizableImage(file) {
+      return ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp']
+        .includes((file.type || '').toLowerCase());
+    }
+
+    // Browsers leave file.type empty for some formats, so fall back to the extension
+    function guessContentType(file) {
+      if (file.type) return file.type;
+
+      const ext = (file.name || '').split('.').pop().toLowerCase();
+      const byExt = {
+        heic: 'image/heic', heif: 'image/heif',
+        pdf: 'application/pdf',
+        doc: 'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        xls: 'application/vnd.ms-excel',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ppt: 'application/vnd.ms-powerpoint',
+        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        pages: 'application/x-iwork-pages-sffpages',
+        numbers: 'application/x-iwork-numbers-sffnumbers',
+        key: 'application/x-iwork-keynote-sffkey',
+        txt: 'text/plain', csv: 'text/csv', rtf: 'application/rtf',
+        zip: 'application/zip'
+      };
+
+      return byExt[ext] || 'application/octet-stream';
+    }
+
+    // Read any file as base64, untouched
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1]);
+        reader.onerror = () => reject(new Error('Could not read file'));
+        reader.readAsDataURL(file);
+      });
     }
 
     // Shrink a photo in the browser before upload - phone photos are often
@@ -1595,7 +1698,7 @@
       });
     }
 
-    async function uploadClientPhotos(event, index) {
+    async function uploadClientFiles(event, index) {
       const input = event.target;
       const files = Array.from(input.files || []);
       if (!files.length) return;
@@ -1610,21 +1713,44 @@
       }
 
       let uploaded = 0;
-      let latestPhotos = null;
+      let latestFiles = null;
+      const tooLarge = [];
 
       for (const file of files) {
         if (status) status.textContent = `Uploading ${uploaded + 1} of ${files.length}...`;
 
         try {
-          const base64 = await resizeImage(file, 1600);
+          let base64;
+          let contentType;
+
+          if (isResizableImage(file)) {
+            // Photos get shrunk, which usually brings them under the limit
+            base64 = await resizeImage(file, 1600);
+            contentType = 'image/jpeg';
+          } else {
+            // Documents and formats the canvas can't read go up untouched,
+            // so an oversized one has to be refused rather than shrunk
+            if (file.size > MAX_UPLOAD_BYTES) {
+              tooLarge.push(file.name || 'file');
+              continue;
+            }
+            base64 = await readFileAsBase64(file);
+            contentType = guessContentType(file);
+          }
+
+          // A resized photo can still exceed the limit if it was enormous
+          if ((base64.length * 3) / 4 > MAX_UPLOAD_BYTES) {
+            tooLarge.push(file.name || 'file');
+            continue;
+          }
 
           const response = await fetch(`${API_URL}/upload-product-photo`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               productRecordId: product.id,
-              filename: file.name || 'client-photo.jpg',
-              contentType: 'image/jpeg',
+              filename: file.name || 'client-file',
+              contentType: contentType,
               file: base64,
               projectName: currentProject,
               productName: getFieldValue(product, 'My Product Suggestion') || 'Unknown',
@@ -1636,24 +1762,31 @@
 
           if (!data.success) throw new Error(data.error || 'Upload failed');
 
-          latestPhotos = data.photos;
+          latestFiles = data.photos;
           uploaded++;
         } catch (error) {
-          console.error('Error uploading photo:', error);
+          console.error('Error uploading file:', error);
           if (status) status.textContent = `Upload failed: ${error.message}`;
           input.value = '';
           return;
         }
       }
 
-      // Keep the local record in step so a re-render still shows the photos
-      if (latestPhotos) {
-        product.fields['Client Photos'] = latestPhotos;
+      // Keep the local record in step so a re-render still shows the files
+      if (latestFiles) {
+        product.fields['Client Files'] = latestFiles;
         const container = document.getElementById(`clientPhotos-${index}`);
-        if (container) container.innerHTML = renderClientPhotos(latestPhotos);
+        if (container) container.innerHTML = renderClientFiles(latestFiles);
       }
 
-      if (status) status.textContent = `${uploaded} photo${uploaded === 1 ? '' : 's'} added`;
+      let message = '';
+      if (uploaded) message = `${uploaded} file${uploaded === 1 ? '' : 's'} added`;
+      if (tooLarge.length) {
+        const names = tooLarge.join(', ');
+        message += `${message ? '. ' : ''}${names} ${tooLarge.length === 1 ? 'is' : 'are'} too large (max 5MB)`;
+      }
+
+      if (status) status.textContent = message;
       input.value = '';
     }
 

@@ -690,7 +690,8 @@ app.post('/api/save-product-notes', async (req, res) => {
   }
 });
 
-// Client photo upload - appends to the "Client Photos" attachment field
+// Client file upload - appends to the "Client Files" attachment field.
+// Accepts any file type; the browser sends the real content type.
 app.post('/api/upload-product-photo', async (req, res) => {
   try {
     const { productRecordId, filename, contentType, file, projectName, productName, groupName } = req.body;
@@ -701,7 +702,7 @@ app.post('/api/upload-product-photo', async (req, res) => {
 
     // Airtable's upload endpoint appends to the field, so existing photos are never replaced
     await axios.post(
-      `https://content.airtable.com/v0/${BASE_ID}/${productRecordId}/${encodeURIComponent('Client Photos')}/uploadAttachment`,
+      `https://content.airtable.com/v0/${BASE_ID}/${productRecordId}/${encodeURIComponent('Client Files')}/uploadAttachment`,
       {
         contentType: contentType || 'image/jpeg',
         file: file,
@@ -728,7 +729,7 @@ app.post('/api/upload-product-photo', async (req, res) => {
       `Photo added: ${groupName || 'Unknown'} → ${productName || 'Unknown'}`
     );
 
-    res.json({ success: true, photos: record.data.fields['Client Photos'] || [] });
+    res.json({ success: true, photos: record.data.fields['Client Files'] || [] });
 
   } catch (error) {
     console.error('Error uploading client photo:', error.response?.data || error.message);
